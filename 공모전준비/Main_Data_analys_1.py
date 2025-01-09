@@ -139,6 +139,14 @@ def perform_chi_square_test(actual_frequencies, benford_dist, symbol, start_date
 
 # Main function
 def main():
+    symbols_input = input("Enter the cryptocurrency symbols (separated by commas, e.g., BTCUSDT, ETHUSDT): ").strip().upper()
+    symbols = symbols_input.split(",")  # 쉼표로 구분하여 리스트로 저장
+
+    # 최대 50개까지만 입력 받기
+    if len(symbols) > 50:
+        print("You can only enter up to 50 cryptocurrency symbols.")
+        return
+    
     # 사용자에게 시작 날짜 및 시간과 종료 날짜 및 시간을 입력 받기
     start_datetime = input("Enter the start date and time (YYYY-MM-DD-HH:MM): ").strip()
     end_datetime = input("Enter the end date and time (YYYY-MM-DD-HH:MM): ").strip()
@@ -148,14 +156,6 @@ def main():
         end_time = datetime_to_timestamp(end_datetime)
     except ValueError:
         print("Invalid date-time format. Please use the format YYYY-MM-DD-HH:MM.")
-        return
-
-    symbols_input = input("Enter the cryptocurrency symbols (separated by commas, e.g., BTCUSDT, ETHUSDT): ").strip().upper()
-    symbols = symbols_input.split(",")  # 쉼표로 구분하여 리스트로 저장
-
-    # 최대 50개까지만 입력 받기
-    if len(symbols) > 50:
-        print("You can only enter up to 50 cryptocurrency symbols.")
         return
 
     save_directory = './crypto_data'
