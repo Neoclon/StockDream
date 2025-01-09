@@ -1,0 +1,5 @@
+Chi-Square Test Results (2024-10-11 to 2024-10-15):
+Symbol: BTC
+Chi-Square Statistic: 0.004212003866587314
+P-value: 0.9999999999991818
+Conclusion: BTC volume follows Benford's Law.
