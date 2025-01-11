@@ -1,5 +1,0 @@
-Chi-Square Test Results (2022-05-01-00:00 to 2022-05-05-00:00):
-Symbol: Binance_LUNA
-Chi-Square Statistic: 0.010619077999442178
-P-value: 0.999999999967026
-Conclusion: Binance_LUNA trade amount follows Benford's Law.
