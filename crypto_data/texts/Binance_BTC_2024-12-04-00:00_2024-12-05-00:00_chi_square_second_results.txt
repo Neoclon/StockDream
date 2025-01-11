@@ -1,6 +1,0 @@
-Chi-Square Test Results (2024-12-04-00:00 to 2024-12-05-00:00):
-Symbol: Binance_BTC
-Digit Type: Second
-Chi-Square Statistic: 0.0026
-P-value: 1.0000
-Conclusion: The Second digit distribution follows Benford's Law.

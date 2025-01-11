@@ -1,5 +1,0 @@
-Chi-Square Test Results (2025-01-09-00:00 to 2025-01-09-23:59):
-Symbol: Binance_BTC
-Chi-Square Statistic: 0.013508145545264414
-P-value: 0.9999999999137607
-Conclusion: Binance_BTC volume follows Benford's Law.
