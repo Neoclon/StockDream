@@ -171,7 +171,7 @@ def plot_benford_graph(actual_frequencies, benford_dist, symbol, start_date, end
     plt.legend()
 
     # Save the graph with exchange in filename
-    graph_path = f"{graph_directory}/{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_graph.png"
+    graph_path = f"{graph_directory}/TA_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_graph.png"
     plt.savefig(graph_path)
     plt.close()
 
@@ -192,7 +192,7 @@ def plot_benford_table(actual_frequencies, benford_dist, symbol, start_date, end
     })
 
     # Save table as an image with exchange in filename
-    table_path = f"{table_directory}/{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_table.png"
+    table_path = f"{table_directory}/TA_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_table.png"
     plt.figure(figsize=(8, 4))
     table_ax = plt.gca()
     table_ax.axis('off')
@@ -225,7 +225,7 @@ def perform_mad_test(actual_frequencies, benford_dist, symbol, start_date, end_d
     else:
         conformity = "Non-Conformity"
 
-    mad_results_path = f"{text_directory}/{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_mad_{digit_type.lower()}_results.txt"
+    mad_results_path = f"{text_directory}/TA_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_mad_{digit_type.lower()}_results.txt"
     with open(mad_results_path, "w") as file:
         file.write(f"MAD Test Results ({start_date} to {end_date}):\n")
         file.write(f"Exchange: {exchange.capitalize()}\n")
