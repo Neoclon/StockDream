@@ -1,0 +1,6 @@
+MAD Test Results (2025-01-01-00:00 to 2025-01-12-00:00):
+Exchange: Binance
+Symbol: BTC
+Digit Type: Second
+MAD Value: 0.003650
+Conformity: Close Conformity
