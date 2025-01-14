@@ -137,10 +137,7 @@ def extract_first_digit(value):
     abs_value = abs(value)
     while abs_value < 1:  # 1 이상이 될 때까지 스케일 조정
         abs_value *= 10
-    abs_value_str = ''.join(filter(str.isdigit, str(abs_value)))  # 숫자만 추출
-    if len(abs_value_str) > 0:
-        return int(abs_value_str[0])  # 첫 번째 자릿수 추출
-    return None
+    return int(str(abs_value)[0])
 
 # 두 번째 자릿수를 추출하는 함수
 def extract_second_digit(value):
