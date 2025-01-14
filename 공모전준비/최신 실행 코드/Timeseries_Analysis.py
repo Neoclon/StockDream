@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.use('Agg')  # GUI 백엔드를 비활성화하고 파일 기반 렌더링 사용
 import matplotlib.pyplot as plt
 import os
+import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
@@ -65,8 +66,10 @@ def fetch_data_binance(symbol, start_time, end_time):
         print(f"Error processing Binance data for {symbol}: {e}")
         raise
 
-def fetch_data_upbit(symbol, start_datetime, end_datetime):
-  
+def fetch_data_upbit(symbol, start_datetime, end_datetime, max_retries=5, delay=1):
+    """
+    Upbit 데이터를 가져오는 함수에 딜레이와 재시도 로직 추가
+    """
     all_data = []
     current_end_time = end_datetime
 
@@ -77,19 +80,36 @@ def fetch_data_upbit(symbol, start_datetime, end_datetime):
             "to": current_end_time.strftime('%Y-%m-%dT%H:%M:%S'),
             "count": UPBIT_LIMIT,
         }
-        response = requests.get(EXCHANGES["upbit"], params=params, headers=headers)
-        response.raise_for_status()
-        data = response.json()
 
-        if not data:
-            print(f"No more data available for {symbol} up to {current_end_time}.")
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = requests.get(EXCHANGES["upbit"], params=params, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+                if not data:
+                    print(f"No more data available for {symbol} up to {current_end_time}.")
+                    break
+
+                all_data.extend(data)
+
+                # 마지막 데이터의 타임스탬프 - 1초로 갱신
+                last_timestamp = datetime.strptime(data[-1]['candle_date_time_utc'], '%Y-%m-%dT%H:%M:%S')
+                current_end_time = last_timestamp - timedelta(seconds=1)
+                break  # 성공하면 재시도 루프 종료
+
+            except requests.exceptions.HTTPError as e:
+                if response.status_code == 429:  # Too Many Requests
+                    retries += 1
+                    print(f"Rate limit hit. Retrying {retries}/{max_retries}...")
+                    time.sleep(delay * retries)  # 지수 백오프
+                else:
+                    raise e
+
+        else:
+            print(f"Failed to fetch data for {symbol} after {max_retries} retries.")
             break
-
-        all_data.extend(data)
-
-        # 마지막 데이터의 타임스탬프 - 1초로 갱신
-        last_timestamp = datetime.strptime(data[-1]['candle_date_time_utc'], '%Y-%m-%dT%H:%M:%S')
-        current_end_time = last_timestamp - timedelta(seconds=1)
 
     try:
         # 전체 데이터를 DataFrame으로 변환
@@ -113,8 +133,10 @@ def fetch_data_upbit(symbol, start_datetime, end_datetime):
         print(f"Error processing Upbit data for {symbol}: {e}")
         raise
 
-def fetch_data_bithumb(symbol, start_datetime, end_datetime):
-
+def fetch_data_bithumb(symbol, start_datetime, end_datetime, max_retries=5, delay=1):
+    """
+    Bithumb 데이터를 가져오는 함수에 딜레이와 재시도 로직 추가
+    """
     all_data = []
     current_end_time = end_datetime
 
@@ -125,19 +147,36 @@ def fetch_data_bithumb(symbol, start_datetime, end_datetime):
             "to": current_end_time.strftime('%Y-%m-%dT%H:%M:%S'),
             "count": BITTHUMB_LIMIT,
         }
-        response = requests.get(EXCHANGES["bithumb"], params=params, headers=headers)
-        response.raise_for_status()
-        data = response.json()
 
-        if not data:
-            print(f"No more data available for {symbol} up to {current_end_time}.")
+        retries = 0
+        while retries < max_retries:
+            try:
+                response = requests.get(EXCHANGES["bithumb"], params=params, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+                if not data:
+                    print(f"No more data available for {symbol} up to {current_end_time}.")
+                    break
+
+                all_data.extend(data)
+
+                # 마지막 데이터의 타임스탬프 - 1초로 갱신
+                last_timestamp = datetime.strptime(data[-1]['candle_date_time_utc'], '%Y-%m-%dT%H:%M:%S')
+                current_end_time = last_timestamp - timedelta(seconds=1)
+                break  # 성공하면 재시도 루프 종료
+
+            except requests.exceptions.HTTPError as e:
+                if response.status_code == 429:  # Too Many Requests
+                    retries += 1
+                    print(f"Rate limit hit for Bithumb. Retrying {retries}/{max_retries}...")
+                    time.sleep(delay * retries)  # 지수 백오프
+                else:
+                    raise e
+
+        else:
+            print(f"Failed to fetch data for {symbol} after {max_retries} retries.")
             break
-
-        all_data.extend(data)
-
-        # 마지막 데이터의 타임스탬프 - 1초로 갱신
-        last_timestamp = datetime.strptime(data[-1]['candle_date_time_utc'], '%Y-%m-%dT%H:%M:%S')
-        current_end_time = last_timestamp - timedelta(seconds=1)
 
     try:
         # 전체 데이터를 DataFrame으로 변환
@@ -342,9 +381,9 @@ def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_
                 if exchange == "binance":
                     df = fetch_data_binance(symbol, int(current_start.timestamp() * 1000), int(current_end.timestamp() * 1000))
                 elif exchange == "upbit":
-                    df = fetch_data_upbit(symbol, current_end)
+                    df = fetch_data_upbit(symbol, current_start, current_end)
                 elif exchange == "bithumb":
-                    df = fetch_data_bithumb(symbol, current_end)
+                    df = fetch_data_bithumb(symbol, current_start, current_end)
 
                 if df.empty:
                     print(f"No data available for {symbol} from {current_start} to {current_end}.")
