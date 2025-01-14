@@ -69,7 +69,7 @@ def fetch_data_bithumb(symbol, datetime_obj):
 def clean_symbol(symbol):
     if symbol.endswith("USDT"):
         return f"{symbol[:-4]}"
-    elif symbol.startswith("KRW-"):
+    elif symbol.startswith("KRW-") or symbol.startswith("BTC-"):
         return f"{symbol.replace('-', '_')}"
     else:
         return symbol
@@ -98,6 +98,7 @@ def create_exchange_directories(base_directory, exchange):
         "texts": text_directory,
     }
 
+# csv 파일 생성
 def save_to_csv(data, symbol, directories, start_date, end_date, exchange):
     clean_symbol_name = clean_symbol(symbol)
     csv_directory = directories["csv"]
@@ -164,7 +165,7 @@ def plot_benford_graph(actual_frequencies, benford_dist, symbol, start_date, end
     plt.plot(benford_dist.index, benford_dist.values, linestyle='-', marker='o', color='red', label='Benford Distribution')
 
     # Graph titles and labels
-    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} Trade Amount - Benford\'s Law Analysis ({digit_type} Digit) ({start_date} to {end_date})')
+    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - Trade Amount - Benford\'s Law Analysis ({digit_type} Digit) ({start_date} to {end_date})')
     plt.xlabel(f'{digit_type} Digit')
     plt.ylabel('Frequency (Proportion)')
     plt.xticks(range(1, 10))
@@ -200,7 +201,7 @@ def plot_benford_table(actual_frequencies, benford_dist, symbol, start_date, end
     table_plot.auto_set_font_size(False)
     table_plot.set_fontsize(10)
     table_plot.scale(1.2, 1.2)
-    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} Trade Amount - Benford\'s Law Table ({digit_type} Digit) ({start_date} to {end_date})')
+    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - Trade Amount - Benford\'s Law Table ({digit_type} Digit) ({start_date} to {end_date})')
     plt.savefig(table_path, bbox_inches='tight')
     plt.close()
 
@@ -260,9 +261,9 @@ def main():
         print("Invalid date-time format. Please use the format YYYY-MM-DD-HH:MM.")
         return
 
-    digit_choice = input("Do you want to analyze the first or second digit? (first/second): ").strip().lower()
-    if digit_choice not in ["first", "second"]:
-        print("Invalid choice. Please select 'first' or 'second'.")
+    digit_choice = input("Do you want to analyze the first or second digit? (first/second/both): ").strip().lower()
+    if digit_choice not in ["first", "second", "both"]:
+        print("Invalid choice. Please select 'first', 'second', or 'both'.")
         return
 
     save_directory = './crypto_data'
@@ -328,16 +329,19 @@ def main():
             print(f"\nAnalyzing Benford's Law for {symbol} ({digit_choice.capitalize()} Digit)...")
             try:
                 df = pd.read_csv(file_path, header=None, names=["timestamp", "open", "high", "low", "close", "volume", "amount"])
-                if digit_choice == "first":
-                    actual_frequencies, benford_dist = first_digit_analysis(df, "amount")
-                else:
-                    actual_frequencies, benford_dist = second_digit_analysis(df, "amount")
+                if digit_choice in ["first", "both"]:
+                    first_actual, first_benford = first_digit_analysis(df, "amount")
+                    plot_benford_graph(first_actual, first_benford, symbol, start_datetime, end_datetime, directories, "First", exchange)
+                    plot_benford_table(first_actual, first_benford, symbol, start_datetime, end_datetime, directories, "First", exchange)
+                    if perform_all_tests == "yes":
+                        perform_mad_test(first_actual, first_benford, symbol, start_datetime, end_datetime, directories, "First", exchange)
 
-                plot_benford_graph(actual_frequencies, benford_dist, symbol, start_datetime, end_datetime, directories, digit_choice.capitalize(), exchange)
-                plot_benford_table(actual_frequencies, benford_dist, symbol, start_datetime, end_datetime, directories, digit_choice.capitalize(), exchange)
-
-                if perform_all_tests == "yes":
-                    perform_mad_test(actual_frequencies, benford_dist, symbol, start_datetime, end_datetime, directories, digit_choice.capitalize(), exchange)
+                if digit_choice in ["second", "both"]:
+                    second_actual, second_benford = second_digit_analysis(df, "amount")
+                    plot_benford_graph(second_actual, second_benford, symbol, start_datetime, end_datetime, directories, "Second", exchange)
+                    plot_benford_table(second_actual, second_benford, symbol, start_datetime, end_datetime, directories, "Second", exchange)
+                    if perform_all_tests == "yes":
+                        perform_mad_test(second_actual, second_benford, symbol, start_datetime, end_datetime, directories, "Second", exchange)
 
             except Exception as e:
                 print(f"Error analyzing Benford's Law for {symbol}: {e}")

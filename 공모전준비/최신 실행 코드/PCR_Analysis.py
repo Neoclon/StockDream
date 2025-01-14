@@ -154,22 +154,22 @@ def extract_second_digit(value):
         return int(abs_value_str[1])  # 두 번째 자릿수 추출
     return None
 
-# 거래량 상승률 계산 및 벤포드 분석
-def calculate_volume_change_rate_and_analyze(data, digit_type="first"):
-    data['volume_change_rate'] = (data['volume'] - data['volume'].shift(1)) / data['volume'].shift(1)
+# 가격 상승률 계산 및 벤포드 분석
+def calculate_price_change_rate_and_analyze(data, digit_type="first"):
+    data['price_change_rate'] = (data['close'] - data['close'].shift(1)) / data['close'].shift(1)
     if digit_type == "first":
-        data['Digit'] = data['volume_change_rate'].apply(extract_first_digit)
+        data['Digit'] = data['price_change_rate'].apply(extract_first_digit)
         actual_frequencies, benford_dist = first_digit_analysis(data, 'Digit')
         return {"first": (actual_frequencies, benford_dist)}
     elif digit_type == "second":
-        data['Digit'] = data['volume_change_rate'].apply(extract_second_digit)
+        data['Digit'] = data['price_change_rate'].apply(extract_second_digit)
         actual_frequencies, benford_dist = second_digit_analysis(data, 'Digit')
         return {"second": (actual_frequencies, benford_dist)}
     elif digit_type == "both":
-        first_digits = data['volume_change_rate'].apply(extract_first_digit)
+        first_digits = data['price_change_rate'].apply(extract_first_digit)
         first_frequencies, first_benford = first_digit_analysis(data.assign(Digit=first_digits), 'Digit')
         
-        second_digits = data['volume_change_rate'].apply(extract_second_digit)
+        second_digits = data['price_change_rate'].apply(extract_second_digit)
         second_frequencies, second_benford = second_digit_analysis(data.assign(Digit=second_digits), 'Digit')
         
         return {
@@ -178,7 +178,6 @@ def calculate_volume_change_rate_and_analyze(data, digit_type="first"):
         }
     else:
         raise ValueError("Invalid digit type. Choose 'first', 'second', or 'both'.")
-
 
 # Benford analysis for first digit
 def first_digit_analysis(data, column):
@@ -215,14 +214,14 @@ def plot_benford_graph(actual_frequencies, benford_dist, symbol, start_date, end
     plt.plot(benford_dist.index, benford_dist.values, linestyle='-', marker='o', color='red', label='Benford Distribution')
 
     # Graph titles and labels
-    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - TVR - Benford\'s Law Analysis ({digit_type} Digit) ({start_date} to {end_date})')
+    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - PCR - Benford\'s Law Analysis ({digit_type} Digit) ({start_date} to {end_date})')
     plt.xlabel(f'{digit_type} Digit')
     plt.ylabel('Frequency (Proportion)')
     plt.xticks(range(1, 10))
     plt.legend()
 
     # Save the graph with exchange in filename
-    graph_path = f"{graph_directory}/TVR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_graph.png"
+    graph_path = f"{graph_directory}/PCR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_graph.png"
     plt.savefig(graph_path)
     plt.close()
 
@@ -243,7 +242,7 @@ def plot_benford_table(actual_frequencies, benford_dist, symbol, start_date, end
     })
 
     # Save table as an image with exchange in filename
-    table_path = f"{table_directory}/TVR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_table.png"
+    table_path = f"{table_directory}/PCR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_benford_{digit_type.lower()}_table.png"
     plt.figure(figsize=(8, 4))
     table_ax = plt.gca()
     table_ax.axis('off')
@@ -251,7 +250,7 @@ def plot_benford_table(actual_frequencies, benford_dist, symbol, start_date, end
     table_plot.auto_set_font_size(False)
     table_plot.set_fontsize(10)
     table_plot.scale(1.2, 1.2)
-    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - TVR - Benford\'s Law Table ({digit_type} Digit) ({start_date} to {end_date})')
+    plt.title(f'{exchange.capitalize()} - {clean_symbol_name} - PCR - Benford\'s Law Table ({digit_type} Digit) ({start_date} to {end_date})')
     plt.savefig(table_path, bbox_inches='tight')
     plt.close()
 
@@ -277,9 +276,9 @@ def perform_mad_test(actual_frequencies, benford_dist, symbol, start_date, end_d
     else:
         conformity = "Non-Conformity"
 
-    mad_results_path = f"{text_directory}/TVR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_mad_{digit_type.lower()}_results.txt"
+    mad_results_path = f"{text_directory}/PCR_{exchange.capitalize()}_{clean_symbol_name}_{start_date}_{end_date}_mad_{digit_type.lower()}_results.txt"
     with open(mad_results_path, "w") as file:
-        file.write(f"TVR MAD Test Results ({start_date} to {end_date}):\n")
+        file.write(f"PCR MAD Test Results ({start_date} to {end_date}):\n")
         file.write(f"Exchange: {exchange.capitalize()}\n")
         file.write(f"Symbol: {clean_symbol_name}\n")
         file.write(f"Digit Type: {digit_type}\n")
@@ -382,8 +381,8 @@ def main():
             try:
                 df = pd.read_csv(file_path, header=None, names=["timestamp", "open", "high", "low", "close", "volume", "amount"])
                 
-                # 거래량 상승률 계산 및 벤포드 분석 수행
-                analysis_results = calculate_volume_change_rate_and_analyze(df, digit_choice)
+                # 가격 상승률 기반으로 벤포드 분석 수행
+                analysis_results = calculate_price_change_rate_and_analyze(df, digit_choice)
 
                 # 결과 처리
                 if "first" in analysis_results:
