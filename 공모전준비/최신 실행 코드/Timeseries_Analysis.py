@@ -102,7 +102,7 @@ def fetch_data_upbit(symbol, start_datetime, end_datetime, max_retries=5, delay=
             except requests.exceptions.HTTPError as e:
                 if response.status_code == 429:  # Too Many Requests
                     retries += 1
-                    print(f"Rate limit hit. Retrying {retries}/{max_retries}...")
+                    # print(f"Rate limit hit. Retrying {retries}/{max_retries}...")
                     time.sleep(delay * retries)  # 지수 백오프
                 else:
                     raise e
@@ -169,7 +169,7 @@ def fetch_data_bithumb(symbol, start_datetime, end_datetime, max_retries=5, dela
             except requests.exceptions.HTTPError as e:
                 if response.status_code == 429:  # Too Many Requests
                     retries += 1
-                    print(f"Rate limit hit for Bithumb. Retrying {retries}/{max_retries}...")
+                    # print(f"Rate limit hit for Bithumb. Retrying {retries}/{max_retries}...")
                     time.sleep(delay * retries)  # 지수 백오프
                 else:
                     raise e
