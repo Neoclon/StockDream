@@ -157,7 +157,7 @@ def fetch_data_bithumb(symbol, start_datetime, end_datetime, max_retries=5, dela
 
                 if not data:
                     print(f"No more data available for {symbol} up to {current_end_time}.")
-                    break
+                    return pd.DataFrame()  # 빈 DataFrame 반환
 
                 all_data.extend(data)
 
@@ -248,7 +248,6 @@ def analyze_first_digit(data, target_column):
 
     return actual_frequencies_aligned, benford_dist_series
 
-
 def analyze_second_digit(data, target_column):
     """
     두 번째 자릿수에 대한 벤포드 분석 수행
@@ -285,72 +284,99 @@ def calculate_benford_analysis(data, analysis_target, digit_type="both"):
 
     return results
 
-def plot_mac_time_series(mac_values, time_labels, symbol, term_days, exchange, digit_type, analysis_target, start_datetime, end_datetime):
-    plt.figure(figsize=(12, 6))
+def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchange, digit_type, analysis_target, start_datetime, end_datetime):
+    """
+    MAC 값과 날짜별 시가(open), 종가(close)를 별도 축으로 분리하여 표시.
+    """
+    # 그래프 전체 크기 설정
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True, gridspec_kw={'height_ratios': [2, 1], 'hspace': 0})
 
-    # First Digit MAC Values
+    # 첫 번째 그래프 (MAC Values)
     if "first" in mac_values and mac_values["first"]:
-        plt.plot(
+        ax1.plot(
             time_labels,
             mac_values["first"],
-            marker='o',          # 마커 모양
-            markersize=3,        # 점 크기 설정
-            linestyle='-',       # 선 스타일
-            linewidth=1,         # 선 굵기 설정
-            color='blue',
-            alpha = 0.6,
+            marker='o',
+            markersize=2,
+            linestyle='-',
+            linewidth=0.7,
+            color='#009E73',
+            alpha=0.7,
             label='First Digit MAC Values'
         )
 
-    # Second Digit MAC Values (조건 추가)
     if "second" in mac_values and mac_values["second"]:
-        plt.plot(
+        ax1.plot(
             time_labels,
             mac_values["second"],
             marker='o',
-            markersize=3,        # 점 크기 설정
-            linestyle='-',       # 선 스타일
-            linewidth=1,         # 선 굵기 설정
-            color='orange',
-            alpha = 0.6,
+            markersize=2,
+            linestyle='-',
+            linewidth=0.7,
+            color='#E69F00',
+            alpha=0.7,
             label='Second Digit MAC Values'
         )
-        
-    # 기준선 설정
+
+    # 기준선 추가
     if digit_type == "first":
-        # First Digit 기준선
-        plt.axhline(y=0.006, color='green', linestyle='--', linewidth=1, label='Close Conformity')
-        plt.axhline(y=0.012, color='purple', linestyle='--', linewidth=1, label='Acceptable Conformity')
-        plt.axhline(y=0.015, color='red', linestyle='--', linewidth=1, label='Marginal Conformity')
+        ax1.axhline(y=0.006, color='green', linestyle='--', linewidth=0.5, label='Close Conformity')
+        ax1.axhline(y=0.012, color='purple', linestyle='--', linewidth=0.5, label='Acceptable Conformity')
+        ax1.axhline(y=0.015, color='red', linestyle='--', linewidth=0.5, label='Marginal Conformity')
     elif digit_type == "second":
-        # Second Digit 기준선
-        plt.axhline(y=0.008, color='green', linestyle='--', linewidth=1, label='Close Conformity')
-        plt.axhline(y=0.010, color='purple', linestyle='--', linewidth=1, label='Acceptable Conformity')
-        plt.axhline(y=0.012, color='red', linestyle='--', linewidth=1, label='Marginal Conformity')
+        ax1.axhline(y=0.008, color='green', linestyle='--', linewidth=0.5, label='Close Conformity')
+        ax1.axhline(y=0.010, color='purple', linestyle='--', linewidth=0.5, label='Acceptable Conformity')
+        ax1.axhline(y=0.012, color='red', linestyle='--', linewidth=0.5, label='Marginal Conformity')
     elif digit_type == "both":
-        # Both의 새로운 기준선
-        plt.axhline(y=0.012, color='purple', linestyle='--', linewidth=1, label='SD Marginal Conformity')
-        plt.axhline(y=0.015, color='red', linestyle='--', linewidth=1, label='FD Marginal Conformity')
+        ax1.axhline(y=0.012, color='purple', linestyle='--', linewidth=0.5, label='SD Marginal Conformity')
+        ax1.axhline(y=0.015, color='red', linestyle='--', linewidth=0.5, label='FD Marginal Conformity')
 
-    plt.title(f'{exchange.capitalize()} - {symbol} - {analysis_target} - {start_datetime}_to_{end_datetime} - {term_days}-Day Term MAC Time Series ({digit_type})')
-    plt.xlabel('Date')
-    plt.ylabel('MAD Value')
-    plt.legend(loc="upper right")
-    plt.grid()
-    plt.xticks(rotation=45)
+    ax1.set_ylabel('MAC Values')
+    ax1.grid(alpha=0.5)
+    ax1.legend(loc='upper left')
+    ax1.set_title(f'{exchange.capitalize()} - {symbol} - {analysis_target} - {term_days}-Day Term MAC and Price Time Series')
 
-    graph_path = f"./crypto_data/Timeseries_data/graphs/{exchange.capitalize()}_{symbol}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day_mac_timeseries_{digit_type}.png"
+    # 두 번째 그래프 (Price 데이터)
+    daily_prices = (
+        df.groupby(df['timestamp'].dt.date)
+        .agg({'open': 'first', 'close': 'last'})
+        .reindex(time_labels, fill_value=None)  # time_labels와 맞춤
+    )
+
+    for date, row in daily_prices.iterrows():
+        open_price = row['open']
+        close_price = row['close']
+        if pd.notnull(open_price) and pd.notnull(close_price):
+            color = '#D55E00' if close_price > open_price else '#0072B2'  # 상승일은 빨강, 하락일은 파랑
+            ax2.plot(
+                [date, date],
+                [open_price, close_price],
+                color=color,
+                linewidth=3,  # 막대 굵기
+                alpha=0.8
+            )
+
+    ax2.set_ylabel('Price (Currency)')
+    ax2.set_xlabel('Date')
+    ax2.grid(alpha=0.5)
+
+    # x축 날짜 포맷 조정
+    fig.autofmt_xdate()
+
+    # 그래프 저장
+    graph_path = f"./crypto_data/Timeseries_data/graphs/{exchange.capitalize()}_{symbol}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day_mac_and_price_timeseries_{digit_type}.png"
     os.makedirs(os.path.dirname(graph_path), exist_ok=True)
     plt.savefig(graph_path, bbox_inches='tight')
     plt.close()
-    print(f"Saved MAC Time Series graph to {graph_path}")
+    print(f"Saved MAC and Price Time Series graph to {graph_path}")
 
 def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_datetime, term_days, digit_type, analysis_target):
     start_dt, _ = datetime_to_timestamp(start_datetime)
     end_dt, _ = datetime_to_timestamp(end_datetime)
     term_delta = timedelta(days=term_days)
 
-    combined_data = []
+    combined_data = []  # 기존 구조 유지
+    full_data = []  # 전체 데이터 저장용
 
     for symbol in symbols:
         symbol = symbol.strip()
@@ -393,6 +419,9 @@ def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_
                         current_start += timedelta(days=1)
                     continue
 
+                # 데이터 누적
+                full_data.append(df)
+
                 # 벤포드 분석 수행
                 analysis_results = calculate_benford_analysis(df, analysis_target, digit_type)
 
@@ -405,6 +434,7 @@ def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_
                         mad = np.mean(np.abs(expected - observed))
                         mac_values[digit].append(mad)
 
+                        # 기존 구조 유지하며 combined_data에 데이터 추가
                         combined_data.append({
                             "symbol": symbol,
                             "start_date": current_start.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_end.strftime('%Y-%m-%d-%H:%M'),
@@ -425,13 +455,24 @@ def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_
                 current_start += timedelta(days=1)  # 과거 데이터에서 최신으로 이동
 
         # MAC 시계열 그래프 생성
-        if mac_values["first"] or mac_values["second"]:
-            plot_mac_time_series(mac_values, time_labels, symbol, term_days, exchange, digit_type, analysis_target, start_datetime, end_datetime)
+        if full_data and (mac_values["first"] or mac_values["second"]):
+            full_df = pd.concat(full_data).drop_duplicates().reset_index(drop=True)
+            plot_mac_time_series(
+                mac_values=mac_values,
+                time_labels=time_labels,
+                df=full_df,  # 전체 데이터를 전달
+                symbol=symbol,
+                term_days=term_days,
+                exchange=exchange,
+                digit_type=digit_type,
+                analysis_target=analysis_target,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime
+            )
 
-    # 심볼별로 저장하도록 변경된 부분
+    # 기존 combined_data 구조로 파일 저장
     if combined_data:
         combined_df = pd.DataFrame(combined_data)
-        # 심볼별로 파일을 저장
         for symbol in combined_df['symbol'].unique():
             symbol_df = combined_df[combined_df['symbol'] == symbol]
             combined_csv_path = f"./crypto_data/Timeseries_data/MAC_result/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
