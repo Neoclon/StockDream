@@ -209,7 +209,6 @@ def extract_digit(value, position):
     abs_value_str = ''.join(filter(str.isdigit, str(abs_value)))
     return int(abs_value_str[position - 1]) if len(abs_value_str) >= position else None
 
-
 def calculate_target_column(data, analysis_target):
     """
     분석 대상 컬럼 선택
@@ -229,7 +228,6 @@ def calculate_target_column(data, analysis_target):
         return 'trade_amount'
     else:
         raise ValueError(f"Invalid analysis_target: {analysis_target}")
-
 
 def analyze_first_digit(data, target_column):
     """
@@ -263,7 +261,6 @@ def analyze_second_digit(data, target_column):
     actual_frequencies_aligned = actual_frequencies.reindex(benford_dist_series.index, fill_value=0)
 
     return actual_frequencies_aligned, benford_dist_series
-
 
 def calculate_benford_analysis(data, analysis_target, digit_type="both"):
     """
