@@ -1,0 +1,6 @@
+MAD Test Results (2022-05-12-00:00 to 2022-05-15-00:00):
+Exchange: Binance
+Symbol: LUNA
+Digit Type: Second
+MAD Value: 0.005879
+Conformity: Close Conformity
