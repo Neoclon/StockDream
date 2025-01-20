@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end_datetime, term_days):
-    output_file = "./crypto_data/Timeseries_data/전체정리파일.csv"
+    output_file = "./crypto_data/Timeseries_data/전체정리파일_Binance_1day_TA.csv"
     results_list = []
 
     for symbol in symbols:
@@ -26,6 +26,9 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
         # NaN 값 제거
         df = df.dropna(subset=['Value'])
 
+        # 전체 기간 계산
+        overall_period = f"{df['Start'].min()} ~ {df['End'].max()}"
+
         # First와 Second로 그룹화하여 mean과 std 계산
         stats = df.groupby(['Symbol', 'Type'])['Value'].agg(['mean', 'std']).reset_index()
 
@@ -33,7 +36,7 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
         stats = stats.rename(columns={'mean': 'Mean', 'std': 'Std'})
 
         # 정리된 데이터프레임
-        stats['전체 기간'] = '전체 기간'
+        stats['전체 기간'] = overall_period
         stats = stats[['Symbol', '전체 기간', 'Type', 'Mean', 'Std']]
 
         # 결과를 리스트에 추가
@@ -41,10 +44,19 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
 
     # 모든 결과를 하나의 데이터프레임으로 병합
     if results_list:
-        final_results = pd.concat(results_list, ignore_index=True)
+        new_results = pd.concat(results_list, ignore_index=True)
 
-        # CSV 파일로 저장 (누적 저장 방식)
-        final_results.to_csv(output_file, index=False, header=not os.path.exists(output_file), mode='a')
+        # 기존 데이터 읽기
+        if os.path.exists(output_file):
+            existing_results = pd.read_csv(output_file)
+
+            # 기존 데이터와 새 데이터 병합 (같은 심볼과 Type은 덮어쓰기)
+            final_results = pd.concat([existing_results, new_results]).drop_duplicates(subset=['Symbol', 'Type'], keep='last').reset_index(drop=True)
+        else:
+            final_results = new_results
+
+        # CSV 파일로 저장
+        final_results.to_csv(output_file, index=False)
 
         print(f"파일이 성공적으로 저장되었습니다: {output_file}")
     else:
