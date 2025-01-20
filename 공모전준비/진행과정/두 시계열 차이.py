@@ -113,7 +113,7 @@ def main():
     symbol_1 = symbol_1.strip().upper()
     exchange_2, symbol_2 = input("Enter the second exchange and symbol (e.g., Upbit,KRW-EOS): ").strip().split(",")
     exchange_2 = exchange_2.strip()
-    symbol_2 = symbol_1.strip().upper()
+    symbol_2 = symbol_2.strip().upper()
     start_datetime = input("Enter start datetime (YYYY-MM-DD-HH:MM): ").strip()
     end_datetime = input("Enter end datetime (YYYY-MM-DD-HH:MM): ").strip()
     term_days = input("Enter term length in days (e.g., 1): ").strip()
