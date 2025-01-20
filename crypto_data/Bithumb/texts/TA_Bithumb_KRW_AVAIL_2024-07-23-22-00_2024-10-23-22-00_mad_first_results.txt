@@ -1,0 +1,6 @@
+MAD Test Results (2024-07-23-22-00 to 2024-10-23-22-00):
+Exchange: Bithumb
+Symbol: KRW_AVAIL
+Digit Type: First
+MAD Value: 0.009579
+Conformity: Acceptable Conformity

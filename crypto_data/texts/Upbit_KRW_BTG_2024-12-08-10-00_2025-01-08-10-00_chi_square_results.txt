@@ -1,0 +1,5 @@
+Chi-Square Test Results (2024-12-08-10-00 to 2025-01-08-10-00):
+Symbol: Upbit_KRW_BTG
+Chi-Square Statistic: 0.006080296968878592
+P-value: 0.9999999999964493
+Conclusion: Upbit_KRW_BTG volume follows Benford's Law.
