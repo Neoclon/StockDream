@@ -1,10 +1,25 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+# 거래소 이름 입력받기
+exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+
+# 파일 및 저장 경로 설정
+file_path = f"./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체정리파일_{exchange_name}_TA_1day.csv"
+save_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체 정리 그래프/"
+save_title = f"scatter_plots_by_group_{exchange_name}"
+
+# 디렉토리가 없으면 생성
+os.makedirs(save_path, exist_ok=True)
 
 # 데이터 읽기
-file_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/MAC_DATA_누적 copy.csv"
-df = pd.read_csv(file_path)
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"지정된 경로에 파일이 없습니다: {file_path}")
+    exit()
 
 # Symbol별 평균 데이터 추출
 symbols = df['Symbol'].unique()
@@ -14,8 +29,10 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
+    mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+    mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+    #mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
+    #mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
     means_first.append(mean_first)
     means_second.append(mean_second)
     symbol_labels.append(symbol)
@@ -28,8 +45,7 @@ y = np.array(means_first)
 x_origin = np.mean(x)
 y_origin = np.mean(y)
 
-# 색상 분류: 시가총액 순서 기준 그룹화
-colors = []
+# 색상 분류 및 그룹화
 group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e']
 groups = {"Top 7": [], "8-21": [], "22-39": [], "40-": []}
 for i, (xi, yi) in enumerate(zip(x, y)):
@@ -63,15 +79,16 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax.axvline(x=x_origin, color='green', linestyle='--', linewidth=1)
 
     # 그래프 설정
-    ax.set_title(f'{group_name}: Second Digit vs First Digit')
+    ax.set_title(f'{group_name}: ({exchange_name})')
     ax.set_xlabel('Second Digit Mean')
     ax.set_ylabel('First Digit Mean')
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
-    # ax.grid(True)
 
-# 레이아웃 조정
+# 레이아웃 조정 및 저장
 plt.tight_layout()
-output_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/scatter_plots_by_group.png"
+output_path = os.path.join(save_path, f"{save_title}.png")
 plt.savefig(output_path, dpi=300)
 plt.show()
+
+print(f"그래프가 저장되었습니다: {output_path}")

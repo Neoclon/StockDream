@@ -69,7 +69,7 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
 if __name__ == "__main__":
     # 사용자 입력 받기
     symbols = [symbol.strip().upper() for symbol in input("분석할 심볼들을 콤마로 구분하여 입력하세요 (예: BTCUSDT,ETHUSDT): ").split(',')]
-    exchange = "Binance"
+    exchange = "Upbit"
     #exchange = input("거래소 이름을 입력하세요 (예: Binance): ").strip().capitalize()
     analysis_target = "TA"
     #analysis_target = input("분석 대상을 입력하세요 (예: TA): ")

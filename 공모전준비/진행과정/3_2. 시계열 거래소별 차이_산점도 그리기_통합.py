@@ -1,10 +1,25 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+# 거래소 이름 입력받기
+exchange = input("거래소 이름을 입력하세요 (예: Upbit, Binance): ").strip()
 
 # 데이터 읽기
-file_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/MAC_DATA_누적 copy.csv"
-df = pd.read_csv(file_path)
+file_path = f"./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체정리파일_{exchange}_TA_1day.csv"
+save_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체 정리 그래프/"
+save_title = f"Scatter_Unity_1Day_TA_{exchange}"
+
+# 디렉토리가 없으면 생성
+os.makedirs(save_path, exist_ok=True)
+
+# 데이터 읽기
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"지정된 경로에 파일이 없습니다: {file_path}")
+    exit()
 
 # Symbol별 평균 데이터 추출
 symbols = df['Symbol'].unique()
@@ -14,8 +29,10 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
+    mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+    mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+    # mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean']
+    # mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean']
     means_first.append(mean_first)
     means_second.append(mean_second)
     symbol_labels.append(symbol)
@@ -56,12 +73,16 @@ plt.axhline(y=y_origin, color='red', linestyle='--', linewidth=1, label=f'Y Mean
 plt.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Mean ({x_origin:.4f})')
 
 # 그래프 설정
-plt.title('2D Scatter Plot with Color Intensity: Second Digit vs First Digit')
+plt.title(f'2D Scatter Plot : {exchange}')
 plt.xlabel('Second Digit Mean')
 plt.ylabel('First Digit Mean')
 # plt.grid(True)
 plt.legend()
 plt.tight_layout()
 
-# 그래프 출력
-plt.show()
+# 그래프 저장
+output_path = os.path.join(save_path, f"{save_title}.png")
+plt.savefig(output_path, dpi=300)
+plt.close()
+
+print(f"그래프가 저장되었습니다: {output_path}")
