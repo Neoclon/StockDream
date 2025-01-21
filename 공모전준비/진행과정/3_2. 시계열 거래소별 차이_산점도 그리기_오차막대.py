@@ -1,10 +1,25 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+# 거래소 이름 입력받기
+exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+
+# 파일 및 저장 경로 설정
+file_path = f"./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체정리파일_{exchange_name}_TA_1day.csv"
+save_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체 정리 그래프/"
+save_title = f"scatter_plots_by_group_{exchange_name}_with_error"
+
+# 디렉토리가 없으면 생성
+os.makedirs(save_path, exist_ok=True)
 
 # 데이터 읽기
-file_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/MAC_DATA_누적 copy.csv"
-df = pd.read_csv(file_path)
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"지정된 경로에 파일이 없습니다: {file_path}")
+    exit()
 
 # Symbol별 평균 및 표준편차 데이터 추출 (시가총액 순서 반영)
 symbols = df['Symbol'].unique()
@@ -16,10 +31,14 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev'].mean()
-    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
-    std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev'].mean()
+    mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+    std_first = symbol_data[symbol_data['Type'] == 'first']['Std']
+    mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+    std_second = symbol_data[symbol_data['Type'] == 'second']['Std']
+    #mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
+    #std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev'].mean()
+    #mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
+    #std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev'].mean()
     means_first.append(mean_first)
     means_second.append(mean_second)
     stds_first.append(std_first)
@@ -76,7 +95,7 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Mean ({x_origin:.4f})')
 
     # 그래프 설정
-    ax.set_title(f'{group_name}: Second Digit vs First Digit')
+    ax.set_title(f'{group_name}: {exchange_name}_ErrorBar')
     ax.set_xlabel('First Digit Mean')
     ax.set_ylabel('Second Digit Mean')
     ax.set_xlim(x_min, x_max)
@@ -87,6 +106,6 @@ for idx, (group_name, data) in enumerate(groups.items()):
 # 레이아웃 조정
 plt.tight_layout()
 
-output_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/scatter_plots_by_group_errorbar.png"
+output_path = os.path.join(save_path, f"{save_title}.png")
 plt.savefig(output_path, dpi=300)
 plt.show()
