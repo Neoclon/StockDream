@@ -494,11 +494,6 @@ def perform_analysis_for_symbol(exchange, symbol, start_datetime, end_datetime, 
 
 from concurrent.futures import ThreadPoolExecutor
 
-<<<<<<< HEAD
-=======
-#이렇게
-
->>>>>>> b991f6afbdc49b7b1abb66a3654e4c6e8c38d19c
 def main():
     # Fixed values
     exchange = "binance"
