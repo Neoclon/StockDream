@@ -9,6 +9,13 @@ import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
+#################################################
+# 현재 날짜: 2024-07-01-00:00 부터 2025-01-01-00:00
+# 현재 거래소: binance
+# 현재 type: both
+# 현재 target: TA
+#################################################
+
 # 거래소별 API 엔드포인트 정의
 EXCHANGES = {
     "binance": "https://api.binance.com/api/v3/klines",
@@ -492,23 +499,30 @@ def perform_analysis_for_symbol(exchange, symbol, start_datetime, end_datetime, 
     """Single symbol analysis function."""
     perform_time_series_benford_analysis(exchange, [symbol], start_datetime, end_datetime, term_days, digit_type, analysis_target)
 
-def main():
-    exchange = input("Select the exchange (binance/upbit/bithumb): ").strip().lower()
-    if exchange not in EXCHANGES:
-        print("Unsupported exchange.")
-        return
+from concurrent.futures import ThreadPoolExecutor
 
-    symbols_input = input("Enter the cryptocurrency symbols (e.g., BTCUSDT, KRW-BTC): ").strip().upper()
+def main():
+    # Fixed values
+    exchange = "binance"
+    start_datetime = "2024-07-01-00:00"
+    end_datetime = "2025-01-01-00:00"
+    term_days = 3
+    digit_type = "both"
+    analysis_target = "TA"
+
+    # User input for symbols only
+    symbols_input = input("Enter the cryptocurrency symbols (comma-separated, e.g., BTCUSDT, KRW-BTC): ").strip().upper()
     symbols = symbols_input.split(",")
 
-    start_datetime = input("Enter the overall start date and time (YYYY-MM-DD-HH:MM): ").strip()
-    end_datetime = input("Enter the overall end date and time (YYYY-MM-DD-HH:MM): ").strip()
+    print(f"Starting analysis with the following fixed values:")
+    print(f"Exchange: {exchange}")
+    print(f"Start Date: {start_datetime}")
+    print(f"End Date: {end_datetime}")
+    print(f"Term Days: {term_days}")
+    print(f"Digit Type: {digit_type}")
+    print(f"Analysis Target: {analysis_target}")
 
-    term_days = int(input("Enter the term length in days (e.g., 14): ").strip())
-    digit_type = input("Do you want to analyze the first, second, or both digits? (first/second/both): ").strip().lower()
-    analysis_target = input("Enter the analysis target (TA/TV/VCR/PCR): ").strip().upper()
-
-   # 병렬 처리 시작
+    # Parallel processing starts here
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(
@@ -524,12 +538,16 @@ def main():
             for symbol in symbols
         ]
 
-        # 작업 완료 확인
+        # Wait for all tasks to complete and handle any exceptions
         for future in futures:
             try:
-                future.result()  # 작업 완료 대기 및 예외 처리
+                future.result()  # Wait for task completion and handle exceptions
             except Exception as e:
                 print(f"Error processing symbol: {e}")
+
+
+if __name__ == "__main__":
+    main()
 
 def notify_completion():
     import os
