@@ -4,8 +4,15 @@ import matplotlib.pyplot as plt
 import requests
 from datetime import datetime
 
+#################################################
+# 현재 거래소: Binance vs Upbit
+# 현재 날짜: 2024-07-01-00:00 부터 2025-01-01-00:00
+# 현재 간격: 1일
+# 현재 target: TA
+#################################################
+
 def construct_file_path(exchange, symbol, analysis_target, start_datetime, end_datetime, term_days):
-    base_path = "./crypto_data/Timeseries_data/MAC_result/"
+    base_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_{analysis_target}"
     filename = f"{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
     return os.path.join(base_path, filename)
 
@@ -117,7 +124,7 @@ def calculate_statistics(mac_difference_data):
             statistics[digit_type] = {"mean": mean_value, "std_dev": std_dev}
     return statistics
 
-def save_statistics_to_csv(symbol, statistics, output_file="MAC_DATA_누적.csv"):
+def save_statistics_to_csv(symbol, statistics, output_file="MAC_Comparison_DATA_누적.csv"):
     # Set the specific path for the output file
     output_dir = "./crypto_data/TS_Difference/"
     os.makedirs(output_dir, exist_ok=True)  # Ensure the directory exists
@@ -185,10 +192,10 @@ def main():
 
         # Calculate statistics and save to CSV
         statistics = calculate_statistics(mac_difference_data)
-        save_statistics_to_csv(symbol, statistics, output_file="MAC_DATA_누적.csv")
+        save_statistics_to_csv(symbol, statistics, output_file="MAC_Comparison_DATA_누적.csv")
 
         # Plot MAC and price and save the output
-        output_path = f"./crypto_data/TS_Difference/MAC_Comparison_{exchange_1.capitalize()}_{exchange_2.capitalize()}_{symbol_1[:-4]}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{digit_selection}.png"
+        output_path = f"./crypto_data/TS_Difference/MAC_Comparison_{exchange_1.capitalize()}_{exchange_2.capitalize()}_{symbol_1[:-4]}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{digit_selection}_{term_days}day.png"
         plot_mac_and_price(mac_difference_data, price_data, output_path, digit_selection, styles, exchange_1, exchange_2, symbol)
         print(f"Graph saved to {output_path}")
 
