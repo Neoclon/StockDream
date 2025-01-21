@@ -1,6 +1,0 @@
-MAD Test Results (2023-08-25-00:00 to 2023-08-26-00:00):
-Exchange: Binance
-Symbol: CYBER
-Digit Type: First
-MAD Value: 0.026834
-Conformity: Non-Conformity

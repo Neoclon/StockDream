@@ -1,6 +1,0 @@
-MAD Test Results (2025-01-01-00:00 to 2025-01-12-22:00):
-Exchange: Upbit
-Symbol: KRW_BTC
-Digit Type: Second
-MAD Value: 0.007214
-Conformity: Acceptable Conformity
