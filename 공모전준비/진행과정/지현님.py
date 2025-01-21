@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 # 현재 날짜: 2024-07-01-00:00 부터 2025-01-01-00:00
 # 현재 거래소: binance
 # 현재 type: both
+# 현재 Term Days: 3
 # 현재 target: TA
 #################################################
 
