@@ -31,14 +31,14 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
-    std_first = symbol_data[symbol_data['Type'] == 'first']['Std']
-    mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
-    std_second = symbol_data[symbol_data['Type'] == 'second']['Std']
-    #mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    #std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev'].mean()
-    #mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
-    #std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev'].mean()
+    #mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+    #std_first = symbol_data[symbol_data['Type'] == 'first']['Std']
+    #mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+    #std_second = symbol_data[symbol_data['Type'] == 'second']['Std']
+    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
+    std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev'].mean()
+    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
+    std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev'].mean()
     means_first.append(mean_first)
     means_second.append(mean_second)
     stds_first.append(std_first)
