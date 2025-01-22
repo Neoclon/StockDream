@@ -7,7 +7,8 @@ from datetime import datetime
 #################################################
 # 현재 거래소: Binance vs Upbit
 # 현재 날짜: 2024-07-01-00:00 부터 2025-01-01-00:00
-# 현재 간격: 1일
+# 현재 간격: 3일
+# 현재 종류:  both
 # 현재 target: TA
 #################################################
 
@@ -157,8 +158,8 @@ def main():
     symbols = input("Enter the symbols (comma-separated, e.g., BTC,ETH,XRP): ").strip().upper().split(",")
     start_datetime = "2024-07-01-00:00"
     end_datetime = "2025-01-01-00:00"
-    term_days = "1"
-    digit_selection = input("Select digit type to plot (first/second/both): ").strip().lower()
+    term_days = "3"
+    digit_selection = "both"
     analysis_target = "TA"
 
     # Define styles for each digit type
