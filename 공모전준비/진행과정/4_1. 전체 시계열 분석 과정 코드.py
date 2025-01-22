@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 #######################################################
-# 현재 거래소, 간격, 대상 고정되어 있음 (바낸, 1일, TA)
+# 현재 거래소, 간격, 대상 고정되어 있음 (업비, 1일, TA)
 #######################################################
 
 def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end_datetime, term_days):
