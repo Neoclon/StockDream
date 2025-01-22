@@ -541,3 +541,32 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def notify_completion():
+    import os
+    import platform
+    if platform.system() == "Darwin":  # macOS
+        os.system('say "Debugging complete"')
+    elif platform.system() == "Linux":
+        os.system('notify-send "Debugging complete"')
+    elif platform.system() == "Windows":
+        os.system('msg * "Debugging complete"')
+
+def send_imessage(phone_number, message):
+    """Send an iMessage to a specified phone number."""
+    apple_script = f'''
+    tell application "Messages"
+        set targetService to 1st service whose service type = iMessage
+        set targetBuddy to buddy "{phone_number}" of targetService
+        send "{message}" to targetBuddy
+    end tell
+    '''
+    os.system(f"osascript -e '{apple_script}'")
+
+if __name__ == "__main__":
+    main()
+    phone_number = "010-9465-3976"  # 본인 전화번호 입력
+    message = "Debugging complete!"  # 알림 메시지 내용
+    send_imessage(phone_number, message)
+    print("Debugging complete!")
+    notify_completion()

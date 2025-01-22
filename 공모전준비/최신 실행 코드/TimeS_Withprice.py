@@ -297,7 +297,7 @@ def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchang
             markersize=2,
             linestyle='-',
             linewidth=0.7,
-            color='#0072B2',
+            color='#009E73',
             alpha=0.7,
             label='First Digit MAC Values'
         )
@@ -330,39 +330,28 @@ def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchang
 
     ax1.set_ylabel('MAC Values')
     ax1.grid(alpha=0.5)
-    ax1.legend(loc='upper right')
+    ax1.legend(loc='upper left')
     ax1.set_title(f'{exchange.capitalize()} - {symbol} - {analysis_target} - {term_days}-Day Term MAC and Price Time Series')
 
-    # 기존 groupby를 resample로 대체
-    daily_prices = df.resample('D', on='timestamp').agg({
-        'open': 'first',
-        'close': 'last',
-        'high': 'max',
-        'low': 'min',
-        'volume': 'sum'
-    }).dropna()  # 빈 데이터 제거
+    # 두 번째 그래프 (Price 데이터)
+    daily_prices = (
+        df.groupby(df['timestamp'].dt.date)
+        .agg({'open': 'first', 'close': 'last'})
+        .reindex(time_labels, fill_value=None)  # time_labels와 맞춤
+    )
 
     for date, row in daily_prices.iterrows():
         open_price = row['open']
         close_price = row['close']
         if pd.notnull(open_price) and pd.notnull(close_price):
-            if open_price == close_price:  # 시가와 종가가 같은 경우
-                ax2.plot(
-                    [date, date],
-                    [open_price, close_price],
-                    color='#D55E00',  # 빨간색 선
-                    linewidth=1,  # 얇은 선
-                    alpha=1
-                )
-            else:
-                color = '#2ECC71' if close_price > open_price else '#E74C3C'  # 상승일은 초록, 하락일은 빨강. 바이낸스 차트 색상처럼
-                ax2.plot(
-                    [date, date],
-                    [open_price, close_price],
-                    color=color,
-                    linewidth=3,  # 막대 굵기
-                    alpha=1
-                )
+            color = '#D55E00' if close_price > open_price else '#0072B2'  # 상승일은 빨강, 하락일은 파랑
+            ax2.plot(
+                [date, date],
+                [open_price, close_price],
+                color=color,
+                linewidth=3,  # 막대 굵기
+                alpha=0.8
+            )
 
     ax2.set_ylabel('Price (Currency)')
     ax2.set_xlabel('Date')
@@ -492,30 +481,23 @@ def perform_analysis_for_symbol(exchange, symbol, start_datetime, end_datetime, 
     """Single symbol analysis function."""
     perform_time_series_benford_analysis(exchange, [symbol], start_datetime, end_datetime, term_days, digit_type, analysis_target)
 
-from concurrent.futures import ThreadPoolExecutor
-
 def main():
-    # Fixed values
-    exchange = "binance"
-    start_datetime = "2024-07-01-00:00"
-    end_datetime = "2025-01-01-00:00"
-    term_days = 3
-    digit_type = "both"
-    analysis_target = "TA"
+    exchange = input("Select the exchange (binance/upbit/bithumb): ").strip().lower()
+    if exchange not in EXCHANGES:
+        print("Unsupported exchange.")
+        return
 
-    # User input for symbols only
-    symbols_input = input("Enter the cryptocurrency symbols (comma-separated, e.g., BTCUSDT, KRW-BTC): ").strip().upper()
+    symbols_input = input("Enter the cryptocurrency symbols (e.g., BTCUSDT, KRW-BTC): ").strip().upper()
     symbols = symbols_input.split(",")
 
-    print(f"Starting analysis with the following fixed values:")
-    print(f"Exchange: {exchange}")
-    print(f"Start Date: {start_datetime}")
-    print(f"End Date: {end_datetime}")
-    print(f"Term Days: {term_days}")
-    print(f"Digit Type: {digit_type}")
-    print(f"Analysis Target: {analysis_target}")
+    start_datetime = input("Enter the overall start date and time (YYYY-MM-DD-HH:MM): ").strip()
+    end_datetime = input("Enter the overall end date and time (YYYY-MM-DD-HH:MM): ").strip()
 
-    # Parallel processing starts here
+    term_days = int(input("Enter the term length in days (e.g., 14): ").strip())
+    digit_type = input("Do you want to analyze the first, second, or both digits? (first/second/both): ").strip().lower()
+    analysis_target = input("Enter the analysis target (TA/TV/VCR/PCR): ").strip().upper()
+
+   # 병렬 처리 시작
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(
@@ -531,13 +513,38 @@ def main():
             for symbol in symbols
         ]
 
-        # Wait for all tasks to complete and handle any exceptions
+        # 작업 완료 확인
         for future in futures:
             try:
-                future.result()  # Wait for task completion and handle exceptions
+                future.result()  # 작업 완료 대기 및 예외 처리
             except Exception as e:
                 print(f"Error processing symbol: {e}")
 
+def notify_completion():
+    import os
+    import platform
+    if platform.system() == "Darwin":  # macOS
+        os.system('say "Debugging complete"')
+    elif platform.system() == "Linux":
+        os.system('notify-send "Debugging complete"')
+    elif platform.system() == "Windows":
+        os.system('msg * "Debugging complete"')
+
+def send_imessage(phone_number, message):
+    """Send an iMessage to a specified phone number."""
+    apple_script = f'''
+    tell application "Messages"
+        set targetService to 1st service whose service type = iMessage
+        set targetBuddy to buddy "{phone_number}" of targetService
+        send "{message}" to targetBuddy
+    end tell
+    '''
+    os.system(f"osascript -e '{apple_script}'")
 
 if __name__ == "__main__":
     main()
+    phone_number = "010-9465-3976"  # 본인 전화번호 입력
+    message = "Debugging complete!"  # 알림 메시지 내용
+    send_imessage(phone_number, message)
+    print("Debugging complete!")
+    notify_completion()
