@@ -9,11 +9,18 @@ import os
 
 # 거래소 이름 입력받기
 exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+term_days = int(input("간격을 입력하세요 (e.g., 14): ").strip())
+analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").strip().upper()
 
-# 파일 및 저장 경로 설정
-file_path = f"./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체정리파일_{exchange_name}_TA_1day.csv"
-save_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체 정리 그래프/"
-save_title = f"scatter_plots_by_group_{exchange_name}_with_error"
+# (개별 거래소용) 파일 및 저장 경로 설정
+file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+save_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체 정리 그래프/"
+save_title = f"Errorbar_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}"
+
+# (개별 거래소용) 파일 및 저장 경로 설정
+#file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}_{analysis_target}_MAC_Comparison_DATA_누적.csv"
+#save_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_TA/전체 정리 그래프/"
+#save_title = f"MAC_Comparison_Errorbar_scatter_plots_{term_days}Day_{analysis_target}"
 
 # 디렉토리가 없으면 생성
 os.makedirs(save_path, exist_ok=True)
@@ -99,7 +106,7 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Mean ({x_origin:.4f})')
 
     # 그래프 설정
-    ax.set_title(f'{group_name}: {exchange_name}_ErrorBar')
+    ax.set_title(f'{group_name}: {exchange_name}_ErrorBar_{term_days}Day_{analysis_target}')
     ax.set_xlabel('First Digit Mean')
     ax.set_ylabel('Second Digit Mean')
     ax.set_xlim(x_min, x_max)
