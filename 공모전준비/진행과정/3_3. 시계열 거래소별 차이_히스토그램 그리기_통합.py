@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+#############################################
+# 파일 및 저장 경로 확인하자
+#############################################
+
 # 데이터 읽기
 file_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체정리파일_Upbit_TA_1day.csv"
 save_path = "./crypto_data/Timeseries_data/MAC_result/1Day_TA/전체 정리 그래프/"

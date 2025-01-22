@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+#############################################
+# 파일 및 저장 경로 확인하자
+#############################################
+
 # 거래소 이름 입력받기
 exchange = input("거래소 이름을 입력하세요 (예: Upbit, Binance): ").strip()
 
