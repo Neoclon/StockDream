@@ -20,8 +20,8 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean'].mean()
-    mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean'].mean()
+    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
+    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
     means_first.append(mean_first)
     means_second.append(mean_second)
     symbol_labels.append(symbol)
