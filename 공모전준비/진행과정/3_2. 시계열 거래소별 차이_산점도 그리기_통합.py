@@ -1,10 +1,36 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+#############################################
+# 파일 및 저장 경로 확인하자
+#############################################
+
+# 거래소 이름 입력받기
+exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+term_days = int(input("간격을 입력하세요 (e.g., 14): ").strip())
+analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").strip().upper()
+
+# (개별 거래소용) 파일 및 저장 경로 설정
+file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+save_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체 정리 그래프/"
+save_title = f"Unitied_scatter_plots_by_group_{exchange_name}_{term_days}Day"
+
+# (개별 거래소용) 파일 및 저장 경로 설정
+#file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}_{analysis_target}_MAC_Comparison_DATA_누적.csv"
+#save_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_TA/전체 정리 그래프/"
+#save_title = f"MAC_Comparison_United_scatter_plots_{term_days}Day_{analysis_target}"
+
+# 디렉토리가 없으면 생성
+os.makedirs(save_path, exist_ok=True)
 
 # 데이터 읽기
-file_path = "./crypto_data/TS_Difference/바낸 vs 업비트 1차 결과/MAC_DATA_누적 copy.csv"
-df = pd.read_csv(file_path)
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"지정된 경로에 파일이 없습니다: {file_path}")
+    exit()
 
 # Symbol별 평균 데이터 추출
 symbols = df['Symbol'].unique()
@@ -14,8 +40,10 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
+    #mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+    #mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean']
+    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean']
     means_first.append(mean_first)
     means_second.append(mean_second)
     symbol_labels.append(symbol)
@@ -56,12 +84,16 @@ plt.axhline(y=y_origin, color='red', linestyle='--', linewidth=1, label=f'Y Mean
 plt.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Mean ({x_origin:.4f})')
 
 # 그래프 설정
-plt.title('2D Scatter Plot with Color Intensity: Second Digit vs First Digit')
+plt.title(f'Unity Scatter Plot : {exchange_name}_{term_days}Day_{analysis_target}')
 plt.xlabel('Second Digit Mean')
 plt.ylabel('First Digit Mean')
 # plt.grid(True)
 plt.legend()
 plt.tight_layout()
 
-# 그래프 출력
-plt.show()
+# 그래프 저장
+output_path = os.path.join(save_path, f"{save_title}.png")
+plt.savefig(output_path, dpi=300)
+plt.close()
+
+print(f"그래프가 저장되었습니다: {output_path}")
