@@ -7,20 +7,24 @@ import os
 # 파일 및 저장 경로 확인하자
 #############################################
 
-# 거래소 이름 입력받기
-exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+# 분석 유형 입력받기
+analysis_type = input("분석 유형을 입력하세요 (IE: 개별 거래소, IC: 거래소 비교): ").strip().upper()
 term_days = int(input("간격을 입력하세요 (e.g., 14): ").strip())
 analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").strip().upper()
 
-# (개별 거래소용) 파일 및 저장 경로 설정
-file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
-save_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체 정리 그래프/"
-save_title = f"Errorbar_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}"
-
-# (개별 거래소용) 파일 및 저장 경로 설정
-#file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}_{analysis_target}_MAC_Comparison_DATA_누적.csv"
-#save_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_TA/전체 정리 그래프/"
-#save_title = f"MAC_Comparison_Errorbar_scatter_plots_{term_days}Day_{analysis_target}"
+# 파일 및 저장 경로 설정
+if analysis_type == "IE":  # 개별 거래소
+    exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
+    file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day copy.csv"
+    save_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체 정리 그래프/"
+    save_title = f"Errorbar_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}_STPTx"
+elif analysis_type == "IC":  # 거래소 비교
+    file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_{analysis_target}_MAC_Comparison_DATA_누적.csv"
+    save_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/전체 정리 그래프/"
+    save_title = f"MAC_Comparison_Errorbar_scatter_plots_{term_days}Day_{analysis_target}"
+else:
+    print("잘못된 분석 유형입니다. IE 또는 IC 중 하나를 입력하세요.")
+    exit()
 
 # 디렉토리가 없으면 생성
 os.makedirs(save_path, exist_ok=True)
@@ -42,14 +46,19 @@ symbol_labels = []
 
 for symbol in symbols:
     symbol_data = df[df['Symbol'] == symbol]
-    #mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
-    #std_first = symbol_data[symbol_data['Type'] == 'first']['Std']
-    #mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
-    #std_second = symbol_data[symbol_data['Type'] == 'second']['Std']
-    mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean'].mean()
-    std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev'].mean()
-    mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean'].mean()
-    std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev'].mean()
+
+    if 'Type' in symbol_data.columns:  # 'Type' 컬럼이 있는 경우
+        mean_first = symbol_data[symbol_data['Type'] == 'first']['Mean']
+        mean_second = symbol_data[symbol_data['Type'] == 'second']['Mean']
+        std_first = symbol_data[symbol_data['Type'] == 'first']['Std']
+        std_second = symbol_data[symbol_data['Type'] == 'second']['Std']
+    elif 'Digit Type' in symbol_data.columns:  # 'Digit Type' 컬럼이 있는 경우
+        mean_first = symbol_data[symbol_data['Digit Type'] == 'First']['Mean']
+        mean_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Mean']
+        std_first = symbol_data[symbol_data['Digit Type'] == 'First']['Std Dev']
+        std_second = symbol_data[symbol_data['Digit Type'] == 'Second']['Std Dev']
+    else:
+        raise ValueError("DataFrame에 'Type' 또는 'Digit Type' 컬럼이 존재하지 않습니다.")
     means_first.append(mean_first)
     means_second.append(mean_second)
     stds_first.append(std_first)
@@ -105,18 +114,32 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax.axhline(y=y_origin, color='red', linestyle='--', linewidth=1, label=f'Y Mean ({y_origin:.4f})')
     ax.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Mean ({x_origin:.4f})')
 
+    # 원점(평균) 표시 / 개별 거래소
+    if analysis_type == "IE":  # IE(개별 거래소)일 때만 실행
+        ax.axhline(y=0.012, color='#0072B2', linestyle='-', linewidth=0.7, alpha=0.5, label="SD Marginal Conformity")
+        ax.axvline(x=0.015, color='#E69F00', linestyle='-', linewidth=0.7, alpha=0.5, label="FD Marginal Conformity")
+
+
     # 그래프 설정
-    ax.set_title(f'{group_name}: {exchange_name}_ErrorBar_{term_days}Day_{analysis_target}')
-    ax.set_xlabel('First Digit Mean')
-    ax.set_ylabel('Second Digit Mean')
+    if analysis_type == "IE":  # 개별 거래소
+        ax.set_title(f'{exchange_name}_{term_days}_{analysis_target} : {group_name}')
+    elif analysis_type == "IC":  # 거래소 비교
+        ax.set_title(f'Binance vs Upbit_{term_days}Day_{analysis_target} : {group_name}')
+    else:
+        raise ValueError("잘못된 분석 유형입니다. IE 또는 IC 중 하나를 입력하세요.")
+    
+    ax.set_xlabel('First Digit Differ Mean')
+    ax.set_ylabel('Second Digit Differ Mean')
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
     #ax.grid(True)
-    ax.legend()
+    ax.legend(loc='lower right')
 
 # 레이아웃 조정
 plt.tight_layout()
 
 output_path = os.path.join(save_path, f"{save_title}.png")
 plt.savefig(output_path, dpi=300)
-plt.show()
+plt.close()
+
+print(f"그래프가 저장되었습니다: {output_path}")
