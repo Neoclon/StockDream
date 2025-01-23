@@ -8,6 +8,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+import gc
 
 # 거래소별 API 엔드포인트 정의
 EXCHANGES = {
@@ -376,6 +377,7 @@ def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchang
     os.makedirs(os.path.dirname(graph_path), exist_ok=True)
     plt.savefig(graph_path, bbox_inches='tight')
     plt.close()
+    gc.collect()
     print(f"Saved MAC and Price Time Series graph to {graph_path}")
 
 def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_datetime, term_days, digit_type, analysis_target):
@@ -508,8 +510,9 @@ def main():
     digit_type = input("Do you want to analyze the first, second, or both digits? (first/second/both): ").strip().lower()
     analysis_target = input("Enter the analysis target (TA/TV/VCR/PCR): ").strip().upper()
 
-   # 병렬 처리 시작
-    with ThreadPoolExecutor() as executor:
+    # Parallel processing with ThreadPoolExecutor
+    max_workers = min(32, os.cpu_count() + 4)  # Limit thread count
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(
                 perform_analysis_for_symbol,
