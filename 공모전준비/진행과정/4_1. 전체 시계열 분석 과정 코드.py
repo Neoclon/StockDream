@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 #######################################################
-# 현재 거래소, 간격, 대상 고정되어 있음 (업비, 1일, TA)
+# 현재 거래소, 간격, 대상 고정되어 있음 (바낸, 3일, TA)
 #######################################################
 
 def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end_datetime, term_days):
@@ -31,11 +31,11 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
         stats['digit_type'] = stats['digit_type'].str.capitalize()
 
         # 결과 포맷 변경
-        stats = stats.rename(columns={'symbol': 'Symbol', 'digit_type': 'Digit Type', 'mean': 'Mean', 'std': 'Std'})
+        stats = stats.rename(columns={'symbol': 'Symbol', 'digit_type': 'Digit Type', 'mean': 'Mean', 'std': 'Std Dev'})
 
         # 정리된 데이터프레임
         stats['전체 기간'] = overall_period
-        stats = stats[['Symbol', '전체 기간', 'Digit Type', 'Mean', 'Std']]
+        stats = stats[['Symbol', '전체 기간', 'Digit Type', 'Mean', 'Std Dev']]
 
         # 결과를 리스트에 추가
         results_list.append(stats)
@@ -63,7 +63,7 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
 if __name__ == "__main__":
     # 사용자 입력 받기
     symbols = [symbol.strip().upper() for symbol in input("분석할 심볼들을 콤마로 구분하여 입력하세요 (예: BTCUSDT,ETHUSDT): ").split(',')]
-    exchange = "Upbit"
+    exchange = "Binance"
     #exchange = input("거래소 이름을 입력하세요 (예: Binance): ").strip().capitalize()
     analysis_target = "TA"
     #analysis_target = input("분석 대상을 입력하세요 (예: TA): ")
