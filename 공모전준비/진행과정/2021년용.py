@@ -1,55 +1,64 @@
 import requests
 import pandas as pd
-from datetime import datetime
 import time
 
-# 조사할 코인 리스트 (CoinGecko 기준 ID)
+# CryptoCompare API 키
+API_KEY = "57d5db6157d9aafa9d2761487a30fa48b69d80a523384ab7a39492c938247e4b"
+BASE_URL = "https://min-api.cryptocompare.com/data/v2/histoday"
+
 coin_list = [
-    "bitcoin", "ethereum", "ripple", "dogecoin", "solana", "cardano", "tron", "chainlink", "stellar",
-    "shiba-inu", "hedera-hashgraph", "polkadot", "bitcoin-cash", "near", "aptos", "aave", "vechain", "ethereum-classic",
-    "algorand", "arbitrum", "cosmos", "stacks", "theta-token", "immutable-x", "the-graph", "sei", "the-sandbox",
-    "eos", "tezos", "iota", "flow", "ethereum-name-service", "neo", "decentraland", "axie-infinity", "chiliz",
-    "ecash", "mina-protocol", "kava", "1inch", "theta-fuel", "astar", "zilliqa", "0x", "just", "golem",
-    "basic-attention-token", "celo", "ankr", "qtum", "siacoin", "gas", "stepn", "aelf", "threshold", "mask-network",
-    "hive", "ontology", "swipe", "storj", "status", "lisk", "civic", "power-ledger", "everipedia", "iost",
-    "stp-network", "strax", "ong", "pundi-x", "steem", "kyber-network-crystal", "ark"
+    "BTC", "ETH", "XRP", "DOGE", "SOL", "ADA", "TRX", "LINK", "SUI", "XLM", "SHIB", "HBAR", "DOT", "BCH", "NEAR",
+    "APT", "AAVE", "VET", "ETC", "ALGO", "ARB", "ATOM", "STX", "THETA", "IMX", "GRT", "SEI", "SAND", "EOS", "XTZ",
+    "IOTA", "FLOW", "ENS", "NEO", "MANA", "AXS", "CHZ", "XEC", "MINA", "KAVA", "1INCH", "ZRO", "BLUR", "TFUEL",
+    "ASTR", "ZIL", "ZRX", "JST", "GLM", "ID", "BAT", "CELO", "ANKR", "QTUM", "SC", "GAS", "GMT", "ELF", "T", "MASK",
+    "POLYX", "HIVE", "ONT", "SXP", "STORJ", "SNT", "LSK", "CVC", "POWR", "IQ", "IOST", "STPT", "STRAX", "ONG",
+    "PUNDIX", "STEEM", "KNC", "ARK"
 ]
 
-# CoinGecko API URL
-BASE_URL = "https://api.coingecko.com/api/v3/coins/"
 
-def get_market_cap(coin, date):
-    url = f"{BASE_URL}{coin}/history"
-    params = {"date": datetime.strptime(date, '%Y-%m-%d').strftime('%d-%m-%Y'), "localization": "false"}
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        market_cap = data.get("market_data", {}).get("market_cap", {}).get("usd", None)
-        return market_cap
-    except Exception as e:
-        print(f"Error fetching data for {coin}: {e}")
-        return None
-
-def fetch_market_caps(coin_list, date, chunk_size=10):
+def fetch_crypto_data(coin_list, date):
+    """
+    특정 날짜 기준으로 CryptoCompare에서 시가총액 데이터 가져오기
+    """
+    timestamp = int(pd.Timestamp(date).timestamp())
     result = []
-    for i in range(0, len(coin_list), chunk_size):
-        chunk = coin_list[i:i + chunk_size]
-        for coin in chunk:
-            market_cap = get_market_cap(coin, date)
-            if market_cap is not None:
-                result.append({"coin": coin, "market_cap_usd": market_cap})
+    
+    for coin in coin_list:
+        try:
+            params = {
+                "fsym": coin,
+                "tsym": "USD",
+                "toTs": timestamp,
+                "limit": 1,
+                "api_key": API_KEY,
+            }
+            response = requests.get(BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            # 시가총액 데이터 추가
+            market_data = data.get("Data", {}).get("Data", [])
+            if market_data:
+                close_price = market_data[-1]["close"]
+                market_cap = market_data[-1]["volumeto"]  # CryptoCompare에서 대략적 시총 추정
+                result.append({"coin": coin, "price": close_price, "market_cap": market_cap})
             else:
-                print(f"Skipping {coin} due to error.")
-            time.sleep(2)  # 요청 간 딜레이 (2초)
-        print("Pausing for 60 seconds to avoid rate limits...")
-        time.sleep(60)  # 청크 처리 후 60초 대기
+                print(f"No data for {coin} on {date}")
+
+        except Exception as e:
+            print(f"Error fetching data for {coin}: {e}")
+        time.sleep(1)  # 요청 간 간격 추가
+
     return pd.DataFrame(result)
 
 # 실행
-date = "2021-12-31"  # 조회할 날짜
-data = fetch_market_caps(coin_list, date)
+date = "2021-12-31"
+data = fetch_crypto_data(coin_list, date)
 
-# 결과 저장
-data.to_csv(f"market_caps_{date}.csv", index=False)
-print(f"Market cap data saved to market_caps_{date}.csv")
+# 결과 정렬 후 저장
+if not data.empty:
+    data = data.sort_values(by="market_cap", ascending=False)  # 시가총액 기준 정렬
+    data.to_csv(f"crypto_compare_market_caps_{date}.csv", index=False)
+    print(f"Market cap data saved to crypto_compare_market_caps_{date}.csv (sorted by market cap)")
+else:
+    print("No valid market cap data available.")
