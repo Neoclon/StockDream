@@ -506,7 +506,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 def main():
     # Fixed values
-    exchange = "upbit"
+    exchange = "binance"
     start_datetime = "2022-01-01-00:00"
     end_datetime = "2023-01-01-00:00"
     term_days = 1

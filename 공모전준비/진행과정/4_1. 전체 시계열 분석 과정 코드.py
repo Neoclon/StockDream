@@ -2,16 +2,16 @@ import pandas as pd
 import os
 
 #######################################################
-# 현재 거래소, 간격, 대상 고정되어 있음 (바낸, 3일, TA)
+# 현재 거래소, 간격, 대상 고정되어 있음 (업비, 1일, 21년, TA)
 #######################################################
 
 def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end_datetime, term_days):
-    output_file = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_{analysis_target}/전체정리파일_{exchange.capitalize()}_{analysis_target}_{term_days}day.csv"
+    output_file = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_{analysis_target}/전체정리파일_{exchange.capitalize()}_{analysis_target}_{term_days}day.csv"
     results_list = []
 
     for symbol in symbols:
         # 파일 경로 생성
-        file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_{analysis_target}/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+        file_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_{analysis_target}/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
         
         # 파일 존재 여부 확인
         if not os.path.exists(file_path):
@@ -63,13 +63,13 @@ def calculate_statistics(symbols, exchange, analysis_target, start_datetime, end
 if __name__ == "__main__":
     # 사용자 입력 받기
     symbols = [symbol.strip().upper() for symbol in input("분석할 심볼들을 콤마로 구분하여 입력하세요 (예: BTCUSDT,ETHUSDT): ").split(',')]
-    exchange = "Binance"
+    exchange = "Upbit"
     #exchange = input("거래소 이름을 입력하세요 (예: Binance): ").strip().capitalize()
     analysis_target = "TA"
     #analysis_target = input("분석 대상을 입력하세요 (예: TA): ")
-    start_datetime = "2024-07-01-00:00"
-    end_datetime = "2025-01-01-00:00"
-    term_days = "3"
+    start_datetime = "2021-01-01-00:00"
+    end_datetime = "2022-01-01-00:00"
+    term_days = "1"
     #term_days = int(input("기간(일)을 입력하세요 (예: 1): "))
 
     calculate_statistics(symbols, exchange, analysis_target, start_datetime, end_datetime, term_days)
