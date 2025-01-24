@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import gc
 
 #################################################
-# 현재 날짜: 2021-01-01-00:00 부터 2022-01-01-00:00
+# 현재 날짜: 2022-01-01-00:00 부터 2023-01-01-00:00
 # 현재 거래소: upbit
 # 현재 type: both
 # 현재 Term Days: 1
@@ -507,46 +507,55 @@ from concurrent.futures import ThreadPoolExecutor
 def main():
     # Fixed values
     exchange = "upbit"
-    start_datetime = "2021-01-01-00:00"
-    end_datetime = "2022-01-01-00:00"
+    start_datetime = "2022-01-01-00:00"
+    end_datetime = "2023-01-01-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
 
-    # User input for symbols only
-    symbols_input = input("Enter the cryptocurrency symbols (comma-separated, e.g., BTCUSDT, KRW-BTC): ").strip().upper()
-    symbols = symbols_input.split(",")
+    # Multiple symbol groups input
+    print("심볼 무리를 입력하세요. 쉼표로 구분하고 각 무리는 세미콜론(;)으로 구분하세요.")
+    print("예시: BTCUSDT,ETHUSDT;XRPUSDT,DOGEUSDT;SOLUSDT,ADAUSDT")
+    symbol_groups_input = input("심볼 무리 입력: ").strip()
 
-    print(f"Starting analysis with the following fixed values:")
-    print(f"Exchange: {exchange}")
-    print(f"Start Date: {start_datetime}")
-    print(f"End Date: {end_datetime}")
-    print(f"Term Days: {term_days}")
-    print(f"Digit Type: {digit_type}")
-    print(f"Analysis Target: {analysis_target}")
+    # Split the input into groups
+    symbol_groups = [
+        group.strip().split(",") for group in symbol_groups_input.split(";")
+    ]
 
-    max_workers = min(32, os.cpu_count() + 4)  # Limit thread count
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [
-            executor.submit(
-                perform_analysis_for_symbol,
-                exchange,
-                symbol.strip(),
-                start_datetime,
-                end_datetime,
-                term_days,
-                digit_type,
-                analysis_target
-            )
-            for symbol in symbols
-        ]
+    print(f"총 {len(symbol_groups)}개의 심볼 무리가 입력되었습니다.")
+    
+    # Process each group sequentially
+    for group_idx, symbols in enumerate(symbol_groups, start=1):
+        print(f"\n심볼 무리 {group_idx}/{len(symbol_groups)} 작업 시작: {symbols}")
+        
+        # Parallel processing with ThreadPoolExecutor
+        max_workers = min(32, os.cpu_count() + 4)  # Limit thread count
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(
+                    perform_analysis_for_symbol,
+                    exchange,
+                    symbol.strip(),
+                    start_datetime,
+                    end_datetime,
+                    term_days,
+                    digit_type,
+                    analysis_target
+                )
+                for symbol in symbols
+            ]
 
-        # Wait for all tasks to complete and handle any exceptions
-        for future in futures:
-            try:
-                future.result()  # Wait for task completion and handle exceptions
-            except Exception as e:
-                print(f"Error processing symbol: {e}")
+            # Wait for all tasks to complete and handle any exceptions
+            for future in futures:
+                try:
+                    future.result()  # Wait for task completion and handle exceptions
+                except Exception as e:
+                    print(f"Error processing symbol: {e}")
+        
+        print(f"심볼 무리 {group_idx}/{len(symbol_groups)} 작업 완료!")
+
+    print("모든 심볼 무리에 대한 작업이 완료되었습니다!")
 
 if __name__ == "__main__":
     main()
