@@ -74,7 +74,7 @@ def fetch_data_binance(symbol, start_time, end_time):
         print(f"Error processing Binance data for {symbol}: {e}")
         raise
 
-def fetch_data_upbit(symbol, start_datetime, end_datetime, max_retries=3, delay=1):
+def fetch_data_upbit(symbol, start_datetime, end_datetime, max_retries=11, delay=1.4):
     """
     Upbit 데이터를 가져오는 함수에 딜레이와 재시도 로직 추가
     """
@@ -244,6 +244,7 @@ def analyze_first_digit(data, target_column):
     :param target_column: 분석 대상 컬럼
     :return: actual_frequencies, benford_dist
     """
+    data = data.copy()  # 원본 데이터를 복사
     data['First_Digit'] = data[target_column].apply(lambda x: extract_digit(x, 1))
     digit_counts = data['First_Digit'].value_counts().sort_index()
     benford_dist = [np.log10(1 + 1 / d) for d in range(1, 10)]
@@ -261,6 +262,7 @@ def analyze_second_digit(data, target_column):
     :param target_column: 분석 대상 컬럼
     :return: actual_frequencies, benford_dist
     """
+    data = data.copy()  # 원본 데이터를 복사
     data['Second_Digit'] = data[target_column].apply(lambda x: extract_digit(x, 2))
     digit_counts = data['Second_Digit'].value_counts().sort_index()
     benford_dist = [sum(np.log10(1 + 1 / (10 * d1 + d2)) for d1 in range(1, 10)) for d2 in range(0, 10)]
@@ -289,112 +291,50 @@ def calculate_benford_analysis(data, analysis_target, digit_type="both"):
 
     return results
 
-def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchange, digit_type, analysis_target, start_datetime, end_datetime):
-    """
-    MAC 값과 날짜별 시가(open), 종가(close)를 별도 축으로 분리하여 표시.
-    """
-    # 그래프 전체 크기 설정
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True, gridspec_kw={'height_ratios': [2, 1], 'hspace': 0})
+from concurrent.futures import ThreadPoolExecutor
 
-    # 첫 번째 그래프 (MAC Values)
-    if "first" in mac_values and mac_values["first"]:
-        ax1.plot(
-            time_labels,
-            mac_values["first"],
-            marker='o',
-            markersize=2,
-            linestyle='-',
-            linewidth=0.7,
-            color='#0072B2',
-            alpha=0.7,
-            label='First Digit MAC Values'
+def fetch_data_parallel_upbit_bithumb(exchange, symbol, start_datetime, end_datetime, fetch_function, interval_days=28):
+    """
+    업비트와 빗썸에 병렬 처리 방식으로 데이터를 수집 (최신 → 과거 방향으로 요청)
+    
+    Args:
+        exchange (str): 거래소 이름 ("upbit", "bithumb")
+        symbol (str): 거래 심볼
+        start_datetime (datetime): 데이터 시작 시간
+        end_datetime (datetime): 데이터 종료 시간
+        fetch_function (callable): 데이터를 가져오는 함수 (fetch_data_upbit 또는 fetch_data_bithumb)
+        interval_days (int): 병렬 처리 시 시간 범위 (기본 30일)
+    
+    Returns:
+        pd.DataFrame: 병렬로 수집한 데이터
+    """
+    # 최신 → 과거로 시간 범위를 나눔
+    time_ranges = []
+    current_end = end_datetime
+    while current_end > start_datetime:
+        current_start = max(start_datetime, current_end - timedelta(days=interval_days))
+        time_ranges.append((current_start, current_end))
+        current_end = current_start - timedelta(seconds=1)  # 중복 방지를 위해 1초 빼기
+
+    # 병렬 처리로 데이터 요청
+    with ThreadPoolExecutor(max_workers = min(10, os.cpu_count() + 4)) as executor:
+        results = executor.map(
+            lambda time_range: fetch_function(symbol, time_range[0], time_range[1]),
+            time_ranges
         )
 
-    if "second" in mac_values and mac_values["second"]:
-        ax1.plot(
-            time_labels,
-            mac_values["second"],
-            marker='o',
-            markersize=2,
-            linestyle='-',
-            linewidth=0.7,
-            color='#E69F00',
-            alpha=0.7,
-            label='Second Digit MAC Values'
-        )
-
-    # 기준선 추가
-    if digit_type == "first":
-        ax1.axhline(y=0.006, color='green', linestyle='--', linewidth=0.5, label='Close Conformity')
-        ax1.axhline(y=0.012, color='purple', linestyle='--', linewidth=0.5, label='Acceptable Conformity')
-        ax1.axhline(y=0.015, color='red', linestyle='--', linewidth=0.5, label='Marginal Conformity')
-    elif digit_type == "second":
-        ax1.axhline(y=0.008, color='green', linestyle='--', linewidth=0.5, label='Close Conformity')
-        ax1.axhline(y=0.010, color='purple', linestyle='--', linewidth=0.5, label='Acceptable Conformity')
-        ax1.axhline(y=0.012, color='red', linestyle='--', linewidth=0.5, label='Marginal Conformity')
-    elif digit_type == "both":
-        ax1.axhline(y=0.012, color='purple', linestyle='--', linewidth=0.5, label='SD Marginal Conformity')
-        ax1.axhline(y=0.015, color='red', linestyle='--', linewidth=0.5, label='FD Marginal Conformity')
-
-    ax1.set_ylabel('MAC Values')
-    ax1.grid(alpha=0.5)
-    ax1.legend(loc='upper right')
-    ax1.set_title(f'{exchange.capitalize()} - {symbol} - {analysis_target} - {term_days}-Day Term MAC and Price Time Series')
-
-    # 기존 groupby를 resample로 대체
-    daily_prices = df.resample('D', on='timestamp').agg({
-        'open': 'first',
-        'close': 'last',
-        'high': 'max',
-        'low': 'min',
-        'volume': 'sum'
-    }).dropna()  # 빈 데이터 제거
-
-    for date, row in daily_prices.iterrows():
-        open_price = row['open']
-        close_price = row['close']
-        if pd.notnull(open_price) and pd.notnull(close_price):
-            if open_price == close_price:  # 시가와 종가가 같은 경우
-                ax2.plot(
-                    [date, date],
-                    [open_price, close_price],
-                    color='#D55E00',  # 빨간색 선
-                    linewidth=1,  # 얇은 선
-                    alpha=1
-                )
-            else:
-                color = '#2ECC71' if close_price > open_price else '#E74C3C'  # 상승일은 초록, 하락일은 빨강. 바이낸스 차트 색상처럼
-                ax2.plot(
-                    [date, date],
-                    [open_price, close_price],
-                    color=color,
-                    linewidth=3,  # 막대 굵기
-                    alpha=1
-                )
-
-    ax2.set_ylabel('Price (Currency)')
-    ax2.set_xlabel('Date')
-    ax2.grid(alpha=0.5)
-
-    # x축 날짜 포맷 조정
-    fig.autofmt_xdate()
-
-    # 그래프 저장
-    graph_path = f"./crypto_data/Timeseries_data/graphs/{exchange.capitalize()}_{symbol}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day_mac_and_price_timeseries_{digit_type}.png"
-    os.makedirs(os.path.dirname(graph_path), exist_ok=True)
-    plt.savefig(graph_path, bbox_inches='tight')
-    plt.close()
-    gc.collect()
-
-    print(f"Saved MAC and Price Time Series graph to {graph_path}")
+    # 데이터 병합
+    try:
+        return pd.concat(results, ignore_index=True)
+    except ValueError:
+        print(f"No data returned for {symbol} on {exchange}")
+        return pd.DataFrame()  # 빈 DataFrame 반환
 
 def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_datetime, term_days, digit_type, analysis_target):
     start_dt, _ = datetime_to_timestamp(start_datetime)
     end_dt, _ = datetime_to_timestamp(end_datetime)
-    term_delta = timedelta(days=term_days)
 
-    combined_data = []  # 기존 구조 유지
-    full_data = []  # 전체 데이터 저장용
+    combined_data = []  # 분석 결과 저장
 
     for symbol in symbols:
         symbol = symbol.strip()
@@ -403,92 +343,72 @@ def perform_time_series_benford_analysis(exchange, symbols, start_datetime, end_
         mac_values = {"first": [], "second": []}
         time_labels = []
 
-        # 시작 및 종료 시점 설정
-        if exchange in ["upbit", "bithumb"]:
-            current_end = end_dt
-        else:  # Binance
+        if exchange == "binance":
+            # 바이낸스: 기존 방식 유지
             current_start = start_dt
-
-        while True:
-            if exchange in ["upbit", "bithumb"]:
-                current_start = current_end - term_delta
-            else:  # Binance
-                current_end = current_start + term_delta
-
-            # 종료 조건 확인
-            if (exchange in ["upbit", "bithumb"] and current_start < start_dt) or \
-               (exchange == "binance" and current_end > end_dt):
-                break
-
-            try:
-                # 거래소별 데이터 가져오기
-                if exchange == "binance":
+            while current_start < end_dt:
+                current_end = current_start + timedelta(days=term_days)
+                try:
                     df = fetch_data_binance(symbol, int(current_start.timestamp() * 1000), int(current_end.timestamp() * 1000))
-                elif exchange == "upbit":
-                    df = fetch_data_upbit(symbol, current_start, current_end)
-                elif exchange == "bithumb":
-                    df = fetch_data_bithumb(symbol, current_start, current_end)
-
-                if df.empty:
-                    print(f"No data available for {symbol} from {current_start} to {current_end}.")
-                    if exchange in ["upbit", "bithumb"]:
-                        current_end -= timedelta(days=1)
-                    else:  # Binance
-                        current_start += timedelta(days=1)
+                    current_start += timedelta(days=term_days)
+                except Exception as e:
+                    print(f"Error fetching Binance data for {symbol}: {e}")
+                    current_start += timedelta(days=term_days)
                     continue
 
-                # 데이터 누적
-                full_data.append(df)
+        elif exchange in ["upbit", "bithumb"]:
+            # 업비트 & 빗썸: 병렬 처리 방식 (최신 → 과거 데이터)
+            fetch_function = fetch_data_upbit if exchange == "upbit" else fetch_data_bithumb
+            try:
+                full_data = fetch_data_parallel_upbit_bithumb(exchange, symbol, start_dt, end_dt, fetch_function, interval_days=28)
+                if full_data.empty:
+                    print(f"No data available for {symbol} on {exchange.capitalize()}. Skipping...")
+                    continue
 
-                # 벤포드 분석 수행
-                analysis_results = calculate_benford_analysis(df, analysis_target, digit_type)
+                # 데이터를 term_days 단위로 슬라이딩 윈도우
+                current_end = end_dt
+                while current_end > start_dt:
+                    current_start = max(start_dt, current_end - timedelta(days=term_days))
+                    df = full_data[(full_data['timestamp'] >= current_start) & (full_data['timestamp'] < current_end)]
 
-                # 분석 결과 처리
-                for digit in ["first", "second"]:
-                    if digit in analysis_results:
-                        actual_frequencies, benford_dist = analysis_results[digit]
-                        observed = actual_frequencies.values
-                        expected = benford_dist.values
-                        mad = np.mean(np.abs(expected - observed))
-                        mac_values[digit].append(mad)
+                    if df.empty:
+                        print(f"No data available for {symbol} from {current_start} to {current_end}.")
+                        current_end -= timedelta(days=term_days)
+                        continue
 
-                        # 기존 구조 유지하며 combined_data에 데이터 추가
-                        combined_data.append({
-                            "symbol": symbol,
-                            "start_date": current_start.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_end.strftime('%Y-%m-%d-%H:%M'),
-                            "end_date": current_end.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_start.strftime('%Y-%m-%d-%H:%M'),
-                            "digit_type": digit,
-                            "mad": mad,
-                            "target": analysis_target
-                        })
+                    # 벤포드 분석 수행
+                    analysis_results = calculate_benford_analysis(df, analysis_target, digit_type)
 
-                time_labels.append(current_start if exchange != "upbit" else current_end)
+                    for digit in ["first", "second"]:
+                        if digit in analysis_results:
+                            actual_frequencies, benford_dist = analysis_results[digit]
+                            observed = actual_frequencies.values
+                            expected = benford_dist.values
+                            mad = np.mean(np.abs(expected - observed))
+                            mac_values[digit].append(mad)
+
+                            # combined_data에 결과 추가
+                            combined_data.append({
+                                "symbol": symbol,
+                                "start_date": current_start.strftime('%Y-%m-%d-%H:%M'),
+                                "end_date": current_end.strftime('%Y-%m-%d-%H:%M'),
+                                "digit_type": digit,
+                                "mad": mad,
+                                "target": analysis_target
+                            })
+
+                    time_labels.append(current_end)
+                    current_end -= timedelta(days=term_days)
 
             except Exception as e:
-                print(f"Error processing data for {symbol} from {current_start} to {current_end}: {e}")
+                print(f"Error fetching {exchange.capitalize()} data for {symbol}: {e}")
+                continue
 
-            if exchange in ["upbit", "bithumb"]:
-                current_end -= timedelta(days=1)  # 최신 데이터에서 과거로 이동
-            else:  # Binance
-                current_start += timedelta(days=1)  # 과거 데이터에서 최신으로 이동
+        else:
+            print(f"Unsupported exchange: {exchange}")
+            continue
 
-        # MAC 시계열 그래프 생성
-        if full_data and (mac_values["first"] or mac_values["second"]):
-            full_df = pd.concat(full_data).drop_duplicates().reset_index(drop=True)
-            plot_mac_time_series(
-                mac_values=mac_values,
-                time_labels=time_labels,
-                df=full_df,  # 전체 데이터를 전달
-                symbol=symbol,
-                term_days=term_days,
-                exchange=exchange,
-                digit_type=digit_type,
-                analysis_target=analysis_target,
-                start_datetime=start_datetime,
-                end_datetime=end_datetime
-            )
-
-    # 기존 combined_data 구조로 파일 저장
+    # 결과 저장
     if combined_data:
         combined_df = pd.DataFrame(combined_data)
         for symbol in combined_df['symbol'].unique():
@@ -507,8 +427,8 @@ from concurrent.futures import ThreadPoolExecutor
 def main():
     # Fixed values
     exchange = "upbit"
-    start_datetime = "2022-01-01-00:00"
-    end_datetime = "2023-01-01-00:00"
+    start_datetime = "2021-01-01-00:00"
+    end_datetime = "2022-01-01-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
