@@ -15,8 +15,8 @@ analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").
 # 파일 및 저장 경로 설정
 if analysis_type == "IE":  # 개별 거래소
     exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
-    file_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
-    save_path = f"./crypto_data/Timeseries_data/MAC_result/{term_days}Day_TA/전체 정리 그래프/"
+    file_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+    save_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체 정리 그래프/"
     save_title = f"United_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}"
 elif analysis_type == "IC":  # 거래소 비교
     file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_{analysis_target}_MAC_Comparison_DATA_누적.csv"
@@ -63,7 +63,7 @@ y = np.array(means_second)
 # 원점 계산 (평균)
 x_origin = np.mean(x)
 y_origin = np.mean(y)
-
+'''
 # 색상 분류: 시가총액 순서 기준 그룹화
 colors = []
 group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
@@ -78,6 +78,19 @@ for i in range(len(symbols)):
         colors.append(group_colors[3])
     else:
         colors.append(group_colors[4])
+'''
+# 색상 분류: 시가총액 순서 기준 그룹화
+colors = []
+group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
+for i in range(len(symbols)):
+    if i < 5:
+        colors.append(group_colors[0])
+    elif i < 16:
+        colors.append(group_colors[1])
+    elif i < 30:
+        colors.append(group_colors[2])
+    else:
+        colors.append(group_colors[3])
 
 # 산점도 그리기
 plt.figure(figsize=(12, 12))
@@ -99,15 +112,17 @@ if analysis_type == "IE":  # IE(개별 거래소)일 때만 실행
 # 그래프 설정
 if analysis_type == "IE":  # 개별 거래소
     plt.title(f'Unity Scatter Plot : {exchange_name}_{term_days}_{analysis_target}')
+    plt.xlabel('First Digit MAC')
+    plt.ylabel('Second Digit MAC')
 elif analysis_type == "IC":  # 거래소 비교
     plt.title(f'Binance vs Upbit_{term_days}Day_{analysis_target}')
+    plt.xlabel('First Digit MAC Differ')
+    plt.ylabel('Second Digit MAC Differ')
 else:
     raise ValueError("잘못된 분석 유형입니다. IE 또는 IC 중 하나를 입력하세요.")
 
-plt.xlabel('First Digit Differ Mean')
-plt.ylabel('Second Digit Differ Mean')
 # plt.grid(True)
-plt.legend(loc='lower right')
+plt.legend(loc='upper right')
 plt.tight_layout()
 
 # 그래프 저장
