@@ -3,16 +3,16 @@ import pandas as pd
 import time
 
 # CryptoCompare API 키
-API_KEY = "57d5db6157d9aafa9d2761487a30fa48b69d80a523384ab7a39492c938247e4b"
+API_KEY = ""
 BASE_URL = "https://min-api.cryptocompare.com/data/v2/histoday"
 
 coin_list = [
-    "BTC", "ETH", "XRP", "DOGE", "SOL", "ADA", "TRX", "LINK", "SUI", "XLM", "SHIB", "HBAR", "DOT", "BCH", "NEAR",
-    "APT", "AAVE", "VET", "ETC", "ALGO", "ARB", "ATOM", "STX", "THETA", "IMX", "GRT", "SEI", "SAND", "EOS", "XTZ",
-    "IOTA", "FLOW", "ENS", "NEO", "MANA", "AXS", "CHZ", "XEC", "MINA", "KAVA", "1INCH", "ZRO", "BLUR", "TFUEL",
-    "ASTR", "ZIL", "ZRX", "JST", "GLM", "ID", "BAT", "CELO", "ANKR", "QTUM", "SC", "GAS", "GMT", "ELF", "T", "MASK",
-    "POLYX", "HIVE", "ONT", "SXP", "STORJ", "SNT", "LSK", "CVC", "POWR", "IQ", "IOST", "STPT", "STRAX", "ONG",
-    "PUNDIX", "STEEM", "KNC", "ARK"
+    "1INCH", "AAVE", "ADA", "ANKR", "ARK", "ATOM", "AXS", "BAT", "BCH", "BTC", 
+    "CHZ", "CVC", "DOGE", "DOT", "ELF", "EOS", "ETC", "ETH", "FLOW", "GAS", "GLM", 
+    "HBAR", "HIVE", "IOST", "IOTA", "IQ", "JST", "KAVA", "KNC", "LINK", "LSK", "MANA", 
+    "NEAR", "NEO", "ONG", "ONT", "POWR", "PUNDIX", "QTUM", "SAND", "SC", "SNT", "STEEM", 
+    "STORJ", "STPT", "STRAX", "STX", "SXP", "TFUEL", "THETA", "TRX", "VET", "XEC", "XLM", 
+    "XRP", "XTZ", "ZIL", "ZRX"
 ]
 
 
