@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import gc
 
 #################################################
-# 현재 날짜: 2021-01-01-00:00 부터 2022-01-01-00:00
+# 현재 날짜: 2022-01-01-00:00 부터 2023-01-01-00:00
 # 현재 거래소: upbit
 # 현재 type: both
 # 현재 Term Days: 1
@@ -507,8 +507,8 @@ from concurrent.futures import ThreadPoolExecutor
 def main():
     # Fixed values
     exchange = "upbit"
-    start_datetime = "2021-01-01-00:00"
-    end_datetime = "2022-01-01-00:00"
+    start_datetime = "2022-01-01-00:00"
+    end_datetime = "2023-01-01-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
