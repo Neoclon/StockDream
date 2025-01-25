@@ -108,7 +108,7 @@ for i, (xi, yi, std_xi, std_yi) in enumerate(zip(x, y, std_x, std_y)):
         groups["31-"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
 
 # x축, y축 범위 설정 (1%만큼 확장)
-x_min, x_max = x.min() - 0.01 * x.min(), x.max() + 0.01 * x.max()
+x_min, x_max = x.min() - 0.1 * x.min(), x.max() + 0.1 * x.max()
 y_min, y_max = y.min() - 0.5 * y.min(), y.max() + 0.5 * y.max()
 
 # 4분할 그래프 설정

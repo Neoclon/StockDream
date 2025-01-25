@@ -129,6 +129,13 @@ def save_to_csv(data, symbol, directories, start_date, end_date, exchange):
                 ])
     return file_path
 
+# Helper function to extract a specific digit (ignoring leading zeros and non-numeric characters)
+def extract_digit(value, position):
+    if pd.isnull(value) or value == 0:
+        return None
+    abs_value_str = ''.join(filter(str.isdigit, str(value)))  # 숫자만 남기기
+    return int(abs_value_str[position - 1]) if len(abs_value_str) >= position else None
+
 # Benford analysis for first digit
 def first_digit_analysis(data, column):
     data['First_Digit'] = data[column].apply(lambda x: int(str(x)[0]) if pd.notnull(x) and str(x)[0] != '0' else None)
@@ -141,12 +148,18 @@ def first_digit_analysis(data, column):
 
 # Benford analysis for second digit
 def second_digit_analysis(data, column):
-    data['Second_Digit'] = data[column].apply(lambda x: int(str(x)[1]) if pd.notnull(x) and len(str(x)) > 1 else None)
+    # Apply extract_digit to get the second digit
+    data['Second_Digit'] = data[column].apply(lambda x: extract_digit(x, 2))
     digit_counts = data['Second_Digit'].value_counts().sort_index()
+
+    # Benford's distribution for the second digit
     benford_dist = [sum(np.log10(1 + 1 / (10 * d1 + d2)) for d1 in range(1, 10)) for d2 in range(0, 10)]
     benford_dist_aligned = pd.Series(benford_dist, index=range(0, 10))  # Second digit starts from 0
+
+    # Calculate actual frequencies
     actual_frequencies = digit_counts / digit_counts.sum()
     actual_frequencies_aligned = actual_frequencies.reindex(benford_dist_aligned.index, fill_value=0)
+
     return actual_frequencies_aligned, benford_dist_aligned
 
 def plot_benford_graph(actual_frequencies, benford_dist, symbol, start_date, end_date, directories, digit_type, exchange):
