@@ -9,6 +9,8 @@ import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 import gc
+import aiohttp
+import asyncio
 
 #################################################
 # 현재 날짜: 2022-01-01-00:00 부터 2023-01-01-00:00
@@ -507,7 +509,7 @@ from concurrent.futures import ThreadPoolExecutor
 def main():
     # Fixed values
     exchange = "upbit"
-    start_datetime = "2022-01-01-00:00"
+    start_datetime = "2022-12-01-00:00"
     end_datetime = "2023-01-01-00:00"
     term_days = 1
     digit_type = "both"
