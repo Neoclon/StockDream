@@ -506,12 +506,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 def main():
     # Fixed values
-    exchange = "binance"
+    exchange = "upbit"
     start_datetime = "2021-01-01-00:00"
     end_datetime = "2022-01-01-00:00"
-    term_days = 3
+    term_days = 1
     digit_type = "both"
-    analysis_target = "TA"
+    analysis_target = "TV"
 
     # User input for symbols only
     symbols_input = input("Enter the cryptocurrency symbols (comma-separated, e.g., BTCUSDT, KRW-BTC): ").strip().upper()
