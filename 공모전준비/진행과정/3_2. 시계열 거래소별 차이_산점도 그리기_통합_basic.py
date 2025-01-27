@@ -15,8 +15,8 @@ analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").
 # 파일 및 저장 경로 설정
 if analysis_type == "IE":  # 개별 거래소
     exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
-    file_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
-    save_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체 정리 그래프/"
+    file_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+    save_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체 정리 그래프/"
     save_title = f"United_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}"
 elif analysis_type == "IC":  # 거래소 비교
     file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_{analysis_target}_MAC_Comparison_DATA_누적.csv"
@@ -63,42 +63,46 @@ y = np.array(means_second)
 # 원점 계산 (평균)
 x_origin = np.mean(x)
 y_origin = np.mean(y)
-'''
-# 색상 분류: 시가총액 순서 기준 그룹화
-colors = []
-group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
-for i in range(len(symbols)):
-    if i < 7:
-        colors.append(group_colors[0])
-    elif i < 21:
-        colors.append(group_colors[1])
-    elif i < 39:
-        colors.append(group_colors[2])
-    elif i < 63:
-        colors.append(group_colors[3])
-    else:
-        colors.append(group_colors[4])
-'''
-# 색상 분류: 시가총액 순서 기준 그룹화
-colors = []
-group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
-for i in range(len(symbols)):
-    if i < 5:
-        colors.append(group_colors[0])
-    elif i < 16:
-        colors.append(group_colors[1])
-    elif i < 30:
-        colors.append(group_colors[2])
-    else:
-        colors.append(group_colors[3])
+
+# 그룹화 함수 (파일 순서 기반)
+def assign_group_by_file_order(symbols):
+    total_symbols = len(symbols)
+    group_labels = pd.cut(
+        range(total_symbols),
+        bins=[-1, int(total_symbols * 0.15), int(total_symbols * 0.35),
+              int(total_symbols * 0.60), total_symbols],
+        labels=['Top 15%', '15~35%', '35~60%', '60~100%']
+    )
+    return {symbols[i]: group_labels[i] for i in range(total_symbols)}
+
+# 그룹화 및 색상 설정
+group_colors = {
+    'Top 15%': '#e41a1c',
+    '15~35%': '#377eb8',
+    '35~60%': '#4daf4a',
+    '60~100%': '#984ea3'
+}
+
+# 그룹 할당
+symbol_groups = assign_group_by_file_order(symbol_labels)
+colors = [group_colors[symbol_groups[symbol]] for symbol in symbol_labels]
 
 # 산점도 그리기
 plt.figure(figsize=(12, 12))
 
-for i, (xi, yi, color) in enumerate(zip(x, y, colors)):
-    plt.scatter(xi, yi, color=color, alpha=0.9, s=100)
-    plt.text(xi + 0.00005, yi - 0.00025, symbol_labels[i], fontsize=10, ha='center', va='center', alpha=0.9, 
-             bbox=dict(facecolor='white', alpha=0, edgecolor='none'))
+# 그룹별로 데이터 처리
+for group_name, color in group_colors.items():
+    group_data = [(xi, yi, label) for xi, yi, label in zip(x, y, symbol_labels) if symbol_groups[label] == group_name]
+    x_group = [xi for xi, yi, label in group_data]
+    y_group = [yi for xi, yi, label in group_data]
+    
+    # 그룹별 산점도
+    plt.scatter(x_group, y_group, color=color, alpha=1, s=50, label=f'{group_name} ({len(x_group)})')
+
+    # 그룹별 라벨 추가
+    for xi, yi, label in group_data:
+        plt.text(xi + 0.00005, yi - 0.00025, label, fontsize=9, ha='center', va='center', alpha=1,
+                 bbox=dict(facecolor='white', alpha=0, edgecolor='none'))
 
 # 원점 표시
 plt.axhline(y=y_origin, color='red', linestyle='--', linewidth=1, label=f'Y Mean ({y_origin:.4f})')
@@ -106,8 +110,8 @@ plt.axvline(x=x_origin, color='green', linestyle='--', linewidth=1, label=f'X Me
 
 # 원점(평균) 표시 / 개별 거래소
 if analysis_type == "IE":  # IE(개별 거래소)일 때만 실행
-    plt.axhline(y=0.012, color='#0072B2', linestyle='-', linewidth=0.7, alpha = 0.5, label="SD Marginal Conformity")
-    plt.axvline(x=0.015, color='#E69F00', linestyle='-', linewidth=0.7, alpha = 0.5, label="FD Marginal Conformity")
+    plt.axhline(y=0.012, color='#404040', linestyle='-', linewidth=1, alpha = 1, label="SD Marginal Conformity")
+    plt.axvline(x=0.015, color='#bababa', linestyle='-', linewidth=1, alpha = 1, label="FD Marginal Conformity")
 
 # 그래프 설정
 if analysis_type == "IE":  # 개별 거래소
@@ -122,7 +126,7 @@ else:
     raise ValueError("잘못된 분석 유형입니다. IE 또는 IC 중 하나를 입력하세요.")
 
 # plt.grid(True)
-plt.legend(loc='upper right')
+plt.legend(loc='upper left')
 plt.tight_layout()
 
 # 그래프 저장
