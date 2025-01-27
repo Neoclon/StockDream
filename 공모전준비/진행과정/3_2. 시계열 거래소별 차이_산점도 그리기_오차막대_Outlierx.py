@@ -15,9 +15,9 @@ analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").
 # 파일 및 저장 경로 설정
 if analysis_type == "IE":  # 개별 거래소
     exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
-    file_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
-    save_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체 정리 그래프/"
-    save_title = f"Errorbar_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}"
+    file_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+    save_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체 정리 그래프/"
+    save_title = f"Errorbar_scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}_no_outliers"
 elif analysis_type == "IC":  # 거래소 비교
     file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_{analysis_target}_MAC_Comparison_DATA_누적.csv"
     save_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/전체 정리 그래프/"
@@ -78,37 +78,53 @@ std_y = np.array(stds_second)
 # 원점 계산 (평균)
 x_origin = np.mean(x)
 y_origin = np.mean(y)
-"""
-# 색상 분류: 시가총액 순서 기준 그룹화
-colors = []
-group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e']
-groups = {"Top 7": [], "8-21": [], "22-39": [], "40-": []}
-for i, (xi, yi, std_xi, std_yi) in enumerate(zip(x, y, std_x, std_y)):
-    if i < 7:
-        groups["Top 7"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    elif i < 21:
-        groups["8-21"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    elif i < 39:
-        groups["22-39"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    else:
-        groups["40-"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-"""
-# 색상 분류: 시가총액 순서 기준 그룹화
-colors = []
-group_colors = ['#6a0dad', '#1f77b4', '#2ca02c', '#ff7f0e']
-groups = {"Top 5": [], "6-16": [], "17-30": [], "31-": []}
-for i, (xi, yi, std_xi, std_yi) in enumerate(zip(x, y, std_x, std_y)):
-    if i < 5:
-        groups["Top 5"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    elif i < 16:
-        groups["6-16"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    elif i < 30:
-        groups["17-30"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
-    else:
-        groups["31-"].append((xi, yi, std_xi, std_yi, symbol_labels[i]))
+
+# 특이값 제거 함수 정의 (IQR 기반)
+def remove_outliers(x, y, std_x, std_y, labels):
+    q1_x, q3_x = np.percentile(x, [25, 75])
+    iqr_x = q3_x - q1_x
+    lower_bound_x, upper_bound_x = q1_x - 1.5 * iqr_x, q3_x + 1.5 * iqr_x
+
+    q1_y, q3_y = np.percentile(y, [25, 75])
+    iqr_y = q3_y - q1_y
+    lower_bound_y, upper_bound_y = q1_y - 1.5 * iqr_y, q3_y + 1.5 * iqr_y
+
+    mask = (x >= lower_bound_x) & (x <= upper_bound_x) & (y >= lower_bound_y) & (y <= upper_bound_y)
+    return x[mask], y[mask], std_x[mask], std_y[mask], [labels[i] for i in range(len(labels)) if mask[i]]
+
+# 특이값 제거
+x, y, std_x, std_y, symbol_labels = remove_outliers(x, y, std_x, std_y, symbol_labels)
+
+# 그룹화 함수 (파일 순서 기반)
+def assign_group_by_file_order(symbols):
+    total_symbols = len(symbols)
+    group_labels = pd.cut(
+        range(total_symbols),
+        bins=[-1, int(total_symbols * 0.15), int(total_symbols * 0.35),
+              int(total_symbols * 0.60), total_symbols],
+        labels=['Top 15%', '15~35%', '35~60%', '60~100%']
+    )
+    return {symbols[i]: group_labels[i] for i in range(total_symbols)}
+
+# 그룹화 및 색상 설정
+group_colors = {
+    'Top 15%': '#e41a1c',
+    '15~35%': '#377eb8',
+    '35~60%': '#4daf4a',
+    '60~100%': '#984ea3'
+}
+
+# 그룹 할당
+symbol_groups = assign_group_by_file_order(symbol_labels)
+
+# 그룹별 데이터 구성
+groups = {group: [] for group in group_colors.keys()}
+for xi, yi, std_xi, std_yi, label in zip(x, y, std_x, std_y, symbol_labels):
+    group = symbol_groups[label]
+    groups[group].append((xi, yi, std_xi, std_yi, label))
 
 # x축, y축 범위 설정 (1%만큼 확장)
-x_min, x_max = x.min() - 0.1 * x.min(), x.max() + 0.1 * x.max()
+x_min, x_max = x.min() - 0.05 * x.min(), x.max() + 0.05 * x.max()
 y_min, y_max = y.min() - 0.5 * y.min(), y.max() + 0.5 * y.max()
 
 # 4분할 그래프 설정
@@ -119,8 +135,8 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax = axes[idx]
 
     for xi, yi, std_xi, std_yi, label in data:
-        ax.errorbar(xi, yi, yerr=std_yi, fmt='o', color=group_colors[idx], capsize=5, alpha=0.8,
-                    label=group_name if label == data[0][-1] else "")
+        ax.errorbar(xi, yi, yerr=std_yi, fmt='o', color=group_colors[group_name], capsize=5, alpha=1,
+                    label=f"{group_name} ({len(data)})" if label == data[0][-1] else "")
         #ax.text(xi + 0.00035, yi + 0.00035, label, fontsize=10, ha='center', va='center', alpha=0.9, 
                 #bbox=dict(facecolor='white', alpha=0, edgecolor='none'))
 
@@ -130,9 +146,8 @@ for idx, (group_name, data) in enumerate(groups.items()):
 
     # 원점(평균) 표시 / 개별 거래소
     if analysis_type == "IE":  # IE(개별 거래소)일 때만 실행
-        ax.axhline(y=0.012, color='#0072B2', linestyle='-', linewidth=0.7, alpha=0.5, label="SD Marginal Conformity")
-        ax.axvline(x=0.015, color='#E69F00', linestyle='-', linewidth=0.7, alpha=0.5, label="FD Marginal Conformity")
-
+        ax.axhline(y=0.012, color='#404040', linestyle='-', linewidth=1, alpha=1, label="SD Marginal Conformity")
+        ax.axvline(x=0.015, color='#bababa', linestyle='-', linewidth=1, alpha=1, label="FD Marginal Conformity")
 
     # 그래프 설정
     if analysis_type == "IE":  # 개별 거래소
@@ -149,7 +164,7 @@ for idx, (group_name, data) in enumerate(groups.items()):
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
     #ax.grid(True)
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper left')
 
 # 레이아웃 조정
 plt.tight_layout()
