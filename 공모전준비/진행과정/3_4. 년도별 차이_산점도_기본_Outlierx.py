@@ -10,27 +10,28 @@ import os
 term_days = int(input("간격을 입력하세요 (e.g., 14): ").strip())
 analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").strip().upper()
 years_1 = int(input("비교할 첫번째 년도를 입력하세요(e.g., 21): ").strip())
-years_2 = int(input("비교할 두번째 년도를 입력하세요(e.g., 21): ").strip())
+years_2 = int(input("비교할 두번째 년도를 입력하세요(e.g., 22): ").strip())
+exchange = input("원하는 거래소를 입력하세요(e.g., Binance/Upbit): ").strip().capitalize()
 
 # 파일 경로 설정 (예시: 2021년도와 2024년도)
-file_path_2021 = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_{analysis_target}/전체정리파일_Upbit_{analysis_target}_{term_days}day.csv"
-file_path_2024 = f"./crypto_data/Timeseries_data/MAC_result/24_{term_days}Day_{analysis_target}/전체정리파일_Upbit_{analysis_target}_{term_days}day.csv"
+file_path_1 = f"./crypto_data/Timeseries_data/MAC_result/{years_1}_{term_days}Day_{analysis_target}/전체정리파일_{exchange}_{analysis_target}_{term_days}day.csv"
+file_path_2 = f"./crypto_data/Timeseries_data/MAC_result/{years_2}_{term_days}Day_{analysis_target}/전체정리파일_{exchange}_{analysis_target}_{term_days}day.csv"
 save_path = f"./comparison_results/"
-save_title = f"Comparison_2021_vs_2024_{term_days}Day_{analysis_target}"
+save_title = f"Comparison_20{years_1}vs_20{years_2}_{exchange}_{term_days}Day_{analysis_target}"
 
 # 디렉토리 생성
 os.makedirs(save_path, exist_ok=True)
 
 # 데이터 읽기
 try:
-    df_2021 = pd.read_csv(file_path_2021)
-    df_2024 = pd.read_csv(file_path_2024)
+    df_1 = pd.read_csv(file_path_1)
+    df_2 = pd.read_csv(file_path_2)
 except FileNotFoundError as e:
     print(f"지정된 경로에 파일이 없습니다: {e}")
     exit()
 
 #############################################
-# 데이터 처리 및 그룹화
+# 데이터 처리 및 특이값 제거
 #############################################
 # 심볼별 평균 데이터 계산
 def calculate_means(df, year):
@@ -59,14 +60,32 @@ def calculate_means(df, year):
         'Mean_Second': means_second
     })
 
-# 각 연도별 평균 계산
-data_2021 = calculate_means(df_2021, 2021)
-data_2024 = calculate_means(df_2024, 2024)
+# 특이값 제거 함수 (IQR 기반)
+def remove_outliers(df):
+    q1_first = df['Mean_First'].quantile(0.25)
+    q3_first = df['Mean_First'].quantile(0.75)
+    iqr_first = q3_first - q1_first
+    lower_bound_first = q1_first - 1.5 * iqr_first
+    upper_bound_first = q3_first + 1.5 * iqr_first
 
-# 공통 심볼 필터링
-common_symbols = set(data_2021['Symbol']).intersection(set(data_2024['Symbol']))
-data_2021 = data_2021[data_2021['Symbol'].isin(common_symbols)]
-data_2024 = data_2024[data_2024['Symbol'].isin(common_symbols)]
+    q1_second = df['Mean_Second'].quantile(0.25)
+    q3_second = df['Mean_Second'].quantile(0.75)
+    iqr_second = q3_second - q1_second
+    lower_bound_second = q1_second - 1.5 * iqr_second
+    upper_bound_second = q3_second + 1.5 * iqr_second
+
+    # 특이값 제외
+    mask = (
+        (df['Mean_First'] >= lower_bound_first) & (df['Mean_First'] <= upper_bound_first) &
+        (df['Mean_Second'] >= lower_bound_second) & (df['Mean_Second'] <= upper_bound_second)
+    )
+    return df[mask]
+
+# 각 연도별 평균 계산 및 특이값 제거
+data_1 = calculate_means(df_1, years_1)
+data_2 = calculate_means(df_2, years_2)
+data_1 = remove_outliers(data_1)
+data_2 = remove_outliers(data_2)
 
 # 시가총액 순서에 따라 그룹화 (상위 15%, 15~35%, 35~60%, 60~100%)
 def assign_group(df):
@@ -80,8 +99,8 @@ def assign_group(df):
     )
     return df
 
-data_2021 = assign_group(data_2021)
-data_2024 = assign_group(data_2024)
+data_1 = assign_group(data_1)
+data_2 = assign_group(data_2)
 
 #############################################
 # 4분할 그래프 그리기
@@ -97,32 +116,28 @@ group_colors = {
 }
 
 for group, color in group_colors.items():
-    # 2021 데이터
-    group_data_2021 = data_2021[data_2021['Group'] == group]
-    plt.scatter(group_data_2021['Mean_First'], group_data_2021['Mean_Second'],
-                color=color, alpha=1, s=50, label=f'2021 {group}')
-    #for _, row in group_data_2021.iterrows():
-        #plt.text(row['Mean_First'], row['Mean_Second'], row['Symbol'], fontsize=9, alpha=0.7, color=color)
+    # 첫번째 년도 데이터 (특이값 제거 후)
+    group_data_1 = data_1[data_1['Group'] == group]
+    plt.scatter(group_data_1['Mean_First'], group_data_1['Mean_Second'],
+                color=color, alpha=1, s=50, label=f'20{years_1} {group} ({len(group_data_1)})')
 
-    # 2024 데이터
-    group_data_2024 = data_2024[data_2024['Group'] == group]
-    plt.scatter(group_data_2024['Mean_First'], group_data_2024['Mean_Second'],
-                color=color, alpha=0.3, s=50, edgecolor='black', label=f'2024 {group}')
-    #for _, row in group_data_2024.iterrows():
-        #plt.text(row['Mean_First'], row['Mean_Second'], row['Symbol'], fontsize=9, alpha=0.7, color=color)
+    # 두 번째 년도 데이터 (특이값 제거 후)
+    group_data_2 = data_2[data_2['Group'] == group]
+    plt.scatter(group_data_2['Mean_First'], group_data_2['Mean_Second'],
+                color=color, alpha=0.3, s=50, edgecolor='black', label=f'20{years_2} {group} ({len(group_data_2)})')
 
 # 그래프 설정
 plt.axhline(y=0.012, color='#404040', linestyle='-', linewidth=1, alpha=1, label="SD Marginal Conformity")
 plt.axvline(x=0.015, color='#bababa', linestyle='-', linewidth=1, alpha=1, label="FD Marginal Conformity")
-plt.title(f'Comparison of Groups by Market Cap: 2021 vs 2024')
+plt.title(f'Comparison of {exchange}: 20{years_1} vs 20{years_2} ({term_days}Day_{analysis_target})')
 plt.xlabel('First Digit Mean')
 plt.ylabel('Second Digit Mean')
-plt.legend()
+plt.legend(loc='upper left')
 plt.tight_layout()
 
 # 그래프 저장
-output_path = os.path.join(save_path, f"{save_title}.png")
+output_path = os.path.join(save_path, f"{save_title}_no_outliers.png")
 plt.savefig(output_path, dpi=300)
 plt.close()
 
-print(f"4분할 그래프가 저장되었습니다: {output_path}")
+print(f"특이값 제거 후 4분할 그래프가 저장되었습니다: {output_path}")
