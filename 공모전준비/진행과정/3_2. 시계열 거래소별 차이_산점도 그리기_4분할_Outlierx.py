@@ -15,8 +15,8 @@ analysis_target = input("analysis target을 입력하세요 (TA/TV/VCR/PCR): ").
 # 파일 및 저장 경로 설정
 if analysis_type == "IE":  # 개별 거래소
     exchange_name = input("거래소 이름을 입력하세요 (예: Binance, Upbit): ").strip()
-    file_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
-    save_path = f"./crypto_data/Timeseries_data/MAC_result/22_{term_days}Day_TA/전체 정리 그래프/"
+    file_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체정리파일_{exchange_name}_{analysis_target}_{term_days}day.csv"
+    save_path = f"./crypto_data/Timeseries_data/MAC_result/21_{term_days}Day_TA/전체 정리 그래프/"
     save_title = f"scatter_plots_{exchange_name}_{term_days}Day_{analysis_target}_no_outliers"
 elif analysis_type == "IC":  # 거래소 비교
     file_path = f"./crypto_data/TS_Difference/{term_days}Day_{analysis_target}/{term_days}Day_{analysis_target}_MAC_Comparison_DATA_누적.csv"
@@ -114,7 +114,8 @@ for xi, yi, label in zip(x, y, symbol_labels):
 
 # x축, y축 범위 설정
 x_min, x_max = x.min() - 0.05 * abs(x.min()), x.max() + 0.05 * abs(x.max())
-y_min, y_max = y.min() - 0.05 * abs(y.min()), y.max() + 0.05 * abs(y.max())
+# y_min, y_max = y.min() - 0.05 * abs(y.min()), y.max() + 0.05 * abs(y.max())
+y_min, y_max = y.min() - 0.05 * abs(y.min()), 0.0125
 
 # 4분할 그래프 설정
 fig, axes = plt.subplots(2, 2, figsize=(16, 16))
@@ -136,7 +137,7 @@ for idx, (group_name, data) in enumerate(groups.items()):
     # 각 점에 라벨 표시
     for xi, yi, label in data:
         ax.text(
-            xi + 0.00035, yi + 0.00035, label, fontsize=9, ha='center', va='center', alpha=1,
+            xi + 0.00005, yi + 0.00005, label, fontsize=9, ha='center', va='center', alpha=1,
             bbox=dict(facecolor='white', alpha=0, edgecolor='none')
         )
 
