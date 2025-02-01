@@ -496,10 +496,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 def main():
     # Fixed values
-    exchange = "binance"
-    start_datetime = "2024-07-01-00:00"
-    end_datetime = "2025-01-01-00:00"
-    term_days = 3
+    exchange = "upbit"
+    start_datetime = "2020-01-01-00:00"
+    end_datetime = "2021-01-01-00:00"
+    term_days = 1
     digit_type = "both"
     analysis_target = "TA"
 
@@ -565,7 +565,7 @@ def send_imessage(phone_number, message):
 
 if __name__ == "__main__":
     main()
-    phone_number = "010-9465-3976"  # 본인 전화번호 입력
+    phone_number = "010-7668-5178"  # 본인 전화번호 입력
     message = "Debugging complete!"  # 알림 메시지 내용
     send_imessage(phone_number, message)
     print("Debugging complete!")
