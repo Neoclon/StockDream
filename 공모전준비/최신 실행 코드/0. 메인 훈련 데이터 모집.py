@@ -13,8 +13,8 @@ import aiohttp
 import asyncio
 
 #################################################
-# 현재 날짜: 2022-01-01-00:00 부터 2023-01-01-00:00
-# 현재 거래소: upbit
+# 현재 날짜: 2023-01-01-00:00 부터 2024-01-01-00:00
+# 현재 거래소: binance
 # 현재 type: both
 # 현재 Term Days: 1
 # 현재 target: TA
@@ -366,7 +366,7 @@ def plot_mac_time_series(mac_values, time_labels, df, symbol, term_days, exchang
     fig.autofmt_xdate()
 
     # 그래프 저장
-    graph_path = f"./crypto_data/Timeseries_data/graphs/지현님용_1/{exchange.capitalize()}_{symbol}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day_mac_and_price_timeseries_{digit_type}.png"
+    graph_path = f"./crypto_data/TraingData/Graph/0.수집_분류전/{exchange.capitalize()}_{symbol}_{analysis_target}_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day_mac_and_price_timeseries_{digit_type}.png"
     os.makedirs(os.path.dirname(graph_path), exist_ok=True)
     plt.savefig(graph_path, bbox_inches='tight')
     plt.close()
@@ -490,7 +490,7 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
         combined_df = pd.DataFrame(combined_data)
         for symbol in combined_df['symbol'].unique():
             symbol_df = combined_df[combined_df['symbol'] == symbol]
-            combined_csv_path = f"./crypto_data/Timeseries_data/MAC_result/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+            combined_csv_path = f"./crypto_data/TraingData/CSV/0.수집_분류전/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
             os.makedirs(os.path.dirname(combined_csv_path), exist_ok=True)
             symbol_df.to_csv(combined_csv_path, index=False)
             print(f"Saved MAC results for {symbol} to {combined_csv_path}")
@@ -500,7 +500,7 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
         combined_actual_df = pd.DataFrame(combined_actual_frequencies)
         for symbol in combined_actual_df['symbol'].unique():
             symbol_actual_df = combined_actual_df[combined_actual_df['symbol'] == symbol]
-            actual_csv_path = f"./crypto_data/Timeseries_data/Actual_Frequency_result/{exchange.capitalize()}_{symbol}_{analysis_target}_Actual_Frequency_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+            actual_csv_path = f"./crypto_data/TraingData/AF_CSV/0.수집_분류전/{exchange.capitalize()}_{symbol}_{analysis_target}_Actual_Frequency_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
             os.makedirs(os.path.dirname(actual_csv_path), exist_ok=True)
             symbol_actual_df.to_csv(actual_csv_path, index=False)
             print(f"Saved Actual Frequency results for {symbol} to {actual_csv_path}")
