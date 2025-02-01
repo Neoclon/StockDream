@@ -448,16 +448,15 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
                             "target": analysis_target
                         })
 
-                        # First Digit의 Actual Frequency 저장 (새로운 추가 기능)
-                        if digit == "first":
-                            combined_actual_frequencies.append({
-                                "symbol": symbol,
-                                "start_date": current_start.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_end.strftime('%Y-%m-%d-%H:%M'),
-                                "end_date": current_end.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_start.strftime('%Y-%m-%d-%H:%M'),
-                                "actual_frequencies": actual_frequencies.tolist(),  # [0.301, 0.198, 0.101, ...] 형태로 저장
-                                "digit_type": digit,
-                                "target": analysis_target
-                            })
+                        # First & Second Digit의 Actual Frequency 저장 (새로운 추가 기능)
+                        combined_actual_frequencies.append({
+                            "symbol": symbol,
+                            "start_date": current_start.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_end.strftime('%Y-%m-%d-%H:%M'),
+                            "end_date": current_end.strftime('%Y-%m-%d-%H:%M') if exchange != "upbit" else current_start.strftime('%Y-%m-%d-%H:%M'),
+                            "actual_frequencies": actual_frequencies.tolist(),  # [0.301, 0.198, 0.101, ...] 형태로 저장
+                            "digit_type": digit,  # "first" 또는 "second"
+                            "target": analysis_target
+                        })
 
                 time_labels.append(current_start if exchange != "upbit" else current_end)
 
@@ -495,7 +494,7 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
             symbol_df.to_csv(combined_csv_path, index=False)
             print(f"Saved MAC results for {symbol} to {combined_csv_path}")
 
-    # **새로운 Actual Frequency 결과 CSV 저장**
+    # **새로운 Actual Frequency 결과 CSV 저장 (First & Second Digit)**
     if combined_actual_frequencies:
         combined_actual_df = pd.DataFrame(combined_actual_frequencies)
         for symbol in combined_actual_df['symbol'].unique():
@@ -513,8 +512,8 @@ from concurrent.futures import ThreadPoolExecutor
 async def main():
     # Fixed values
     exchange = "binance"
-    start_datetime = "2023-11-01-00:00"
-    end_datetime = "2024-01-01-00:00"
+    start_datetime = "2024-11-01-00:00"
+    end_datetime = "2025-01-01-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
