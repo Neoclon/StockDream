@@ -24,13 +24,15 @@ import asyncio
 EXCHANGES = {
     "binance": "https://api.binance.com/api/v3/klines",
     "upbit": "https://api.upbit.com/v1/candles/minutes/1",
-    "bithumb": "https://api.bithumb.com/v1/candles/minutes/1"
+    "bithumb": "https://api.bithumb.com/v1/candles/minutes/1",
+    "kraken": "https://api.kraken.com/0/public/OHLC"  # 추가
 }
 
 INTERVAL = "1m"
 BINANCE_LIMIT = 1000
 UPBIT_LIMIT = 200
 BITTHUMB_LIMIT = 200
+KRAKEN_LIMIT = 720  # Kraken API 최대 요청 제한 (추가)
 
 def datetime_to_timestamp(datetime_str):
     dt = datetime.strptime(datetime_str, "%Y-%m-%d-%H:%M")
@@ -192,6 +194,105 @@ async def fetch_data_bithumb(symbol, start_datetime, end_datetime, max_retries=4
         return df
     except Exception as e:
         print(f"Error processing Bithumb data for {symbol}: {e}")
+        return pd.DataFrame()
+
+async def fetch_data_kraken(symbol, start_time, end_time, max_retries=5, delay=1):
+    all_data = []
+    current_since = start_time // 1000  # Kraken은 초 단위 타임스탬프 사용
+    interval = 1  # 1분봉
+    request_count = 0  # 요청 횟수 추적
+    last_request_time = time.time()  # 마지막 요청 시간
+
+    async with aiohttp.ClientSession() as session:
+        while True:
+            # Rate Limit 체크 (초당 1회, 분당 15회)
+            elapsed_time = time.time() - last_request_time
+            if request_count >= 15 and elapsed_time < 60:
+                wait_time = 60 - elapsed_time
+                print(f"Rate limit reached. Waiting {wait_time:.1f}s...")
+                await asyncio.sleep(wait_time)
+                request_count = 0
+            elif request_count >= 1 and elapsed_time < 1:
+                await asyncio.sleep(1 - elapsed_time)
+
+            params = {
+                "pair": symbol,
+                "interval": interval,
+                "since": current_since
+            }
+
+            retries = 0
+            while retries < max_retries:
+                try:
+                    async with session.get(EXCHANGES["kraken"], params=params) as response:
+                        response.raise_for_status()
+                        data = await response.json()
+
+                        # Rate Limit 오류 처리
+                        if 'error' in data and any('Too many requests' in err for err in data['error']):
+                            wait_time = delay * (2 ** retries)
+                            print(f"Rate limit exceeded. Retrying in {wait_time}s...")
+                            await asyncio.sleep(wait_time)
+                            retries += 1
+                            continue
+
+                        if not data or 'result' not in data:
+                            print(f"Invalid Kraken response: {data}")
+                            break
+
+                        ohlc_data = data['result'].get(list(data['result'].keys())[0], [])
+                        if not ohlc_data:
+                            print(f"No more data for {symbol} since {current_since}")
+                            break
+
+                        # 타임스탬프 필터링 (end_time 초과 데이터 제외)
+                        filtered_data = [
+                            entry for entry in ohlc_data 
+                            if entry[0] * 1000 <= end_time
+                        ]
+                        all_data.extend(filtered_data)
+
+                        # 마지막 타임스탬프 업데이트
+                        last_timestamp = ohlc_data[-1][0]
+                        if last_timestamp * 1000 >= end_time or len(ohlc_data) < KRAKEN_LIMIT:
+                            break
+                            
+                        current_since = last_timestamp + 1  # 다음 페이지
+                        request_count += 1
+                        last_request_time = time.time()
+                        break
+
+                except aiohttp.ClientResponseError as e:
+                    if e.status == 429:
+                        wait_time = delay * (2 ** retries)
+                        print(f"HTTP 429: Retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        retries += 1
+                    else:
+                        print(f"HTTP Error {e.status}: {e.message}")
+                        break
+                except Exception as e:
+                    print(f"Unexpected error: {str(e)}")
+                    retries += 1
+                    await asyncio.sleep(delay * (2 ** retries))
+
+            if retries == max_retries or not ohlc_data:
+                break
+
+    try:
+        df = pd.DataFrame(all_data, columns=[
+            "timestamp", "open", "high", "low", "close", 
+            "vwap", "volume", "count"
+        ])
+        df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit='s')
+        df[["open", "high", "low", "close", "volume"]] = df[[
+            "open", "high", "low", "close", "volume"
+        ]].astype(float)
+        df["trade_amount"] = df["close"] * df["volume"]
+        return df.sort_values(by="timestamp").reset_index(drop=True)
+    except Exception as e:
+        print(f"Error processing Kraken data for {symbol}: {e}")
         return pd.DataFrame()
 
 def extract_digit(value, position):
@@ -403,7 +504,7 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
 
             # 종료 조건 확인
             if (exchange in ["upbit", "bithumb"] and current_start < start_dt) or \
-               (exchange == "binance" and current_end > end_dt):
+               (exchange in ["binance", "kraken"] and current_end > end_dt):
                 break
 
             try:
@@ -414,6 +515,12 @@ async def perform_time_series_benford_analysis(exchange, symbols, start_datetime
                     df = await fetch_data_upbit(symbol, current_start, current_end)
                 elif exchange == "bithumb":
                     df = await fetch_data_bithumb(symbol, current_start, current_end)
+                elif exchange == "kraken":  # 추가된 부분
+                    df = await fetch_data_kraken(
+                        symbol, 
+                        int(current_start.timestamp() * 1000), 
+                        int(current_end.timestamp() * 1000)
+                    )
 
                 if df.empty:
                     print(f"No data available for {symbol} from {current_start} to {current_end}.")
@@ -511,9 +618,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 async def main():
     # Fixed values
-    exchange = "upbit"
-    start_datetime = "2024-01-01-00:00"
-    end_datetime = "2025-01-01-00:00"
+    exchange = "kraken"
+    start_datetime = "2025-01-01-00:00"
+    end_datetime = "2025-01-11-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
