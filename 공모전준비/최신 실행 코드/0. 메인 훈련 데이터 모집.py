@@ -511,9 +511,15 @@ from concurrent.futures import ThreadPoolExecutor
 
 async def main():
     # Fixed values
+<<<<<<< HEAD
+    exchange = "binance"
+    start_datetime = "2020-01-01-00:00"
+    end_datetime = "2021-01-01-00:00"
+=======
     exchange = "upbit"
     start_datetime = "2023-01-01-00:00"
     end_datetime = "2024-01-01-00:00"
+>>>>>>> f31ef1c5fc0c1b5b466810d9b883d609b95be002
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
