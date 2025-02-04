@@ -62,14 +62,14 @@ def process_symbol_group(symbols, exchange, start_datetime, end_datetime, term_d
         df_final = df_final[["symbol", "start_date", "end_date", "digit_type", "actual_frequencies", "mad", "entropy"]]
 
         # 심볼별 개별 CSV 저장 경로
-        output_path = f"./crypto_data/TraingData/Total_CSV/0.수집_분류전/{exchange.capitalize()}_{symbol}_{analysis_target}_Actual_Frequency_Antrophy_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+        output_path = f"./crypto_data/TraingData/Total_CSV/0.수집_분류전/{exchange.capitalize()}_{symbol}_{analysis_target}_Total_CSV_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
 
         # 저장할 디렉토리가 없는 경우 생성
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         # 변환된 데이터 저장
         df_final.to_csv(output_path, index=False)
-        print(f"✅ {symbol} 엔트로피 계산 완료! 저장된 파일: {output_path}")
+        #print(f"✅ {symbol} 엔트로피 계산 완료! 저장된 파일: {output_path}")
 
 def main():
     # 기본 설정값
@@ -91,10 +91,11 @@ def main():
 
     # 각 심볼 그룹을 순차적으로 처리
     for group_idx, symbols in enumerate(symbol_groups, start=1):
-        print(f"\n▶ 심볼 무리 {group_idx}/{len(symbol_groups)} 처리 중: {symbols}")
+        #print(f"\n▶ 심볼 무리 {group_idx}/{len(symbol_groups)} 처리 중: {symbols}")
         process_symbol_group(symbols, exchange, start_datetime, end_datetime, term_days, analysis_target)
-        print(f"✅ 심볼 무리 {group_idx}/{len(symbol_groups)} 처리 완료!\n")
+        #print(f"✅ 심볼 무리 {group_idx}/{len(symbol_groups)} 처리 완료!\n")
 
 # 실행
 if __name__ == "__main__":
     main()
+    print("✅ 심볼 무리 전체 처리 완료!\n")
