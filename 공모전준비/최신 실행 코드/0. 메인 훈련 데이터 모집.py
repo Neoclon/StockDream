@@ -511,17 +511,17 @@ from concurrent.futures import ThreadPoolExecutor
 
 async def main():
     # Fixed values
-    exchange = "binance"
-    start_datetime = "2021-01-01-00:00"
-    end_datetime = "2022-01-01-00:00"
+    exchange = "upbit"
+    start_datetime = "2023-01-01-00:00"
+    end_datetime = "2024-01-01-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
 
     # Multiple symbol groups input
-    print("심볼 무리를 입력하세요. 쉼표로 구분하고 각 무리는 세미콜론(;)으로 구분하세요.")
-    print("예시: BTCUSDT,ETHUSDT;XRPUSDT,DOGEUSDT;SOLUSDT,ADAUSDT")
-    symbol_groups_input = input("심볼 무리 입력: ").strip()
+    #print("심볼 무리를 입력하세요. 쉼표로 구분하고 각 무리는 세미콜론(;)으로 구분하세요.")
+    #print("예시: BTCUSDT,ETHUSDT;XRPUSDT,DOGEUSDT;SOLUSDT,ADAUSDT")
+    symbol_groups_input = "KRW-BTC,KRW-ETH,KRW-XRP;KRW-DOGE,KRW-SOL,KRW-ADA;KRW-TRX,KRW-AVAX;KRW-LINK,KRW-SUI,KRW-XLM;KRW-SHIB,KRW-HBAR,KRW-DOT;KRW-BCH,KRW-NEAR,KRW-APT;KRW-AAVE,KRW-VET,KRW-ETC;KRW-ALGO,KRW-ARB;KRW-ATOM,KRW-STX,KRW-THETA;KRW-IMX,KRW-GRT,KRW-SEI;KRW-SAND,KRW-EOS,KRW-XTZ;KRW-IOTA,KRW-FLOW,KRW-ENS;KRW-NEO,KRW-MANA,KRW-AXS;KRW-CHZ,KRW-XEC,KRW-MINA;KRW-KAVA,KRW-1INCH,KRW-ZRO;KRW-BLUR,KRW-TFUEL,KRW-ASTR;KRW-ZIL,KRW-ZRX,KRW-JST;KRW-GLM,KRW-ID,KRW-BAT;KRW-CELO,KRW-ANKR,KRW-QTUM;KRW-SC,KRW-GAS,KRW-GMT;KRW-ELF,KRW-T,KRW-MASK;KRW-POLYX,KRW-HIVE,KRW-ONT;KRW-SXP,KRW-STORJ,KRW-SNT;KRW-LSK,KRW-CVC,KRW-POWR;KRW-IQ,KRW-IOST,KRW-STPT;KRW-STRAX,KRW-ONG,KRW-PUNDIX;KRW-STEEM,KRW-KNC,KRW-ARK"
 
     # Split the input into groups
     symbol_groups = [
