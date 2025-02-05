@@ -23,10 +23,10 @@ def process_symbol_group(symbols, exchange, start_datetime, end_datetime, term_d
 
     for symbol in symbols:
         # Actual Frequency 파일 경로
-        actual_file = f"./crypto_data/TraingData/AF_CSV/훈련용 데이터_23_BN/{exchange.capitalize()}_{symbol}_{analysis_target}_Actual_Frequency_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+        actual_file = f"./crypto_data/TraingData/AF_CSV/훈련용 데이터_20_BN/{exchange.capitalize()}_{symbol}_{analysis_target}_Actual_Frequency_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
         
         # MAD 값 파일 경로
-        mad_file = f"./crypto_data/TraingData/CSV/훈련용 데이터_23_BN/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
+        mad_file = f"./crypto_data/TraingData/CSV/훈련용 데이터_20_BN/{exchange.capitalize()}_{symbol}_{analysis_target}_MAC_Results_{start_datetime.replace(':', '_')}_to_{end_datetime.replace(':', '_')}_{term_days}day.csv"
 
         # 파일이 존재하는지 확인
         if not os.path.exists(actual_file):
@@ -74,8 +74,8 @@ def process_symbol_group(symbols, exchange, start_datetime, end_datetime, term_d
 def main():
     # 기본 설정값
     exchange = "binance"
-    start_datetime = "2023-01-01-00:00"
-    end_datetime = "2024-01-01-00:00"
+    start_datetime = "2020-01-01-00:00"
+    end_datetime = "2021-01-01-00:00"
     term_days = 1
     analysis_target = "TA"
 
