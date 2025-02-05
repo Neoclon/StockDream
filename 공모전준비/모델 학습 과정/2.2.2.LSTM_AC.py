@@ -76,7 +76,7 @@ def load_lstm_data_separate(folder_path):
 
 # Autoencoder 학습용 Dataset
 class CryptoTimeSeriesAutoencoderDataset(Dataset):
-    def __init__(self, df, sequence_length=30, mode="first"):
+    def __init__(self, df, sequence_length=15, mode="first"):
         """
         df: First 또는 Second 데이터프레임
         sequence_length: 시퀀스 길이
@@ -134,7 +134,7 @@ class LSTMAutoencoder(nn.Module):
         out = self.output_layer(dec_out)
         return out
 
-def train_model(model, dataloader, criterion, optimizer, num_epochs=50):
+def train_model(model, dataloader, criterion, optimizer, num_epochs=10):
     model.train()
     for epoch in range(num_epochs):
         epoch_loss = 0.0
@@ -160,7 +160,7 @@ def main():
     print(f"✅ First 데이터 로드 완료: {len(df_first)}개 샘플")
     print(f"✅ Second 데이터 로드 완료: {len(df_second)}개 샘플")
 
-    sequence_length = 30
+    sequence_length = 15
 
     # ✅ First Dataset & DataLoader
     first_dataset = CryptoTimeSeriesAutoencoderDataset(df_first, sequence_length, mode="first")
@@ -186,12 +186,12 @@ def main():
 
     # ✅ First 모델 학습
     print("🚀 First 데이터 학습 시작")
-    train_model(first_model, first_loader, criterion, optimizer_first, num_epochs=50)
+    train_model(first_model, first_loader, criterion, optimizer_first, num_epochs=10)
     torch.save(first_model.state_dict(), "lstm_autoencoder_first.pth")
 
     # ✅ Second 모델 학습
     print("🚀 Second 데이터 학습 시작")
-    train_model(second_model, second_loader, criterion, optimizer_second, num_epochs=50)
+    train_model(second_model, second_loader, criterion, optimizer_second, num_epochs=10)
     torch.save(second_model.state_dict(), "lstm_autoencoder_second.pth")
 
     print("✅ 모델 저장 완료")
