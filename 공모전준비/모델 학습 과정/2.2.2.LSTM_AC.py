@@ -76,7 +76,7 @@ def load_lstm_data_separate(folder_path):
 
 # Autoencoder 학습용 Dataset
 class CryptoTimeSeriesAutoencoderDataset(Dataset):
-    def __init__(self, df, sequence_length=30, mode="first"):
+    def __init__(self, df, sequence_length=15, mode="first"):
         """
         df: First 또는 Second 데이터프레임
         sequence_length: 시퀀스 길이
@@ -160,7 +160,7 @@ def main():
     print(f"✅ First 데이터 로드 완료: {len(df_first)}개 샘플")
     print(f"✅ Second 데이터 로드 완료: {len(df_second)}개 샘플")
 
-    sequence_length = 30
+    sequence_length = 15
 
     # ✅ First Dataset & DataLoader
     first_dataset = CryptoTimeSeriesAutoencoderDataset(df_first, sequence_length, mode="first")
