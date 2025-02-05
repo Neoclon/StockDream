@@ -151,7 +151,7 @@ def test_model(model, dataloader):
     return results, np.array(all_errors)
 
 def main():
-    # 테스트 데이터 폴더 (Google Drive 내 경로, 필요에 따라 수정)
+    # 테스트 데이터 폴더 
     test_folder = "./crypto_data/TraingData/Total_CSV/1.BN_24/2.후반기/"
     sequence_length = 15
     
@@ -174,13 +174,13 @@ def main():
     latent_dim = 32
     num_layers = 2
     
-    # Load pre-trained models from Google Drive
+    # Load pre-trained models
     first_model = LSTMAutoencoder(seq_len=sequence_length, input_dim=input_dim_first,
                                   hidden_dim=hidden_dim, latent_dim=latent_dim, num_layers=num_layers).to(device)
     second_model = LSTMAutoencoder(seq_len=sequence_length, input_dim=input_dim_second,
                                    hidden_dim=hidden_dim, latent_dim=latent_dim, num_layers=num_layers).to(device)
-    first_model.load_state_dict(torch.load("/content/drive/MyDrive/lstm_autoencoder_first.pth", map_location=device))
-    second_model.load_state_dict(torch.load("/content/drive/MyDrive/lstm_autoencoder_second.pth", map_location=device))
+    first_model.load_state_dict(torch.load("./공모전준비/모델 학습 과정/학습 모델/YB_data/lstm_autoencoder_first.pth", map_location=device))
+    second_model.load_state_dict(torch.load("./공모전준비/모델 학습 과정/학습 모델/YB_data/lstm_autoencoder_second.pth", map_location=device))
     
     # Test first model
     print("Testing First model...")
@@ -201,7 +201,7 @@ def main():
     # Combine results and save CSV
     all_results = results_first + results_second
     df_results = pd.DataFrame(all_results)
-    df_results.to_csv("/content/drive/MyDrive/autoencoder_results.csv", index=False)
+    df_results.to_csv("./공모전준비/모델 학습 과정/결과/autoencoder_results.csv", index=False)
     print("Autoencoder test results saved to autoencoder_results.csv")
     # print(df_results.head())
 
