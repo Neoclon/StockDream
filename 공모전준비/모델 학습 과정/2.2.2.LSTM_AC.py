@@ -134,7 +134,7 @@ class LSTMAutoencoder(nn.Module):
         out = self.output_layer(dec_out)
         return out
 
-def train_model(model, dataloader, criterion, optimizer, num_epochs=50):
+def train_model(model, dataloader, criterion, optimizer, num_epochs=10):
     model.train()
     for epoch in range(num_epochs):
         epoch_loss = 0.0
@@ -186,12 +186,12 @@ def main():
 
     # ✅ First 모델 학습
     print("🚀 First 데이터 학습 시작")
-    train_model(first_model, first_loader, criterion, optimizer_first, num_epochs=50)
+    train_model(first_model, first_loader, criterion, optimizer_first, num_epochs=10)
     torch.save(first_model.state_dict(), "lstm_autoencoder_first.pth")
 
     # ✅ Second 모델 학습
     print("🚀 Second 데이터 학습 시작")
-    train_model(second_model, second_loader, criterion, optimizer_second, num_epochs=50)
+    train_model(second_model, second_loader, criterion, optimizer_second, num_epochs=10)
     torch.save(second_model.state_dict(), "lstm_autoencoder_second.pth")
 
     print("✅ 모델 저장 완료")
