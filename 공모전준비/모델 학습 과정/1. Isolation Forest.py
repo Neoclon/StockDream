@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import IsolationForest
 import time
+import joblib
 
 def safe_eval(x):
     try:
@@ -121,8 +122,12 @@ def main():
     anomaly_ratio = sum(df['anomaly_label'] == -1) / len(df) * 100
     print(f"✅ 이상 거래 탐지 완료 (이상치 비율: {anomaly_ratio:.2f}%)")
 
-    df.to_csv(output_file, index=False)
-    print(f"✅ 이상 탐지 결과 저장 완료: {output_file}")
+    #df.to_csv(output_file, index=False)
+    #print(f"✅ 이상 탐지 결과 저장 완료: {output_file}")
+
+    # 모델 저장 (joblib을 이용)
+    joblib.dump(model, "isolation_forest_model.pkl")
+    print("✅ Isolation Forest 모델 저장 완료: isolation_forest_model.pkl")
 
 if __name__ == "__main__":
     main()

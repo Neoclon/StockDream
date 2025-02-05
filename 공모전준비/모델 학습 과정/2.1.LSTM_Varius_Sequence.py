@@ -113,8 +113,8 @@ class CryptoTimeSeriesDataset(Dataset):
                     seq = features[i:i + seq_length]
                     if seq.shape == (seq_length, num_features):
                         self.X.append(seq)
-                        # 예측 대상으로는 다음 시점의 마지막 피처(S9)를 예로 사용 (필요에 따라 변경 가능)
-                        self.y.append(features[i + seq_length][-1])
+                        # ✅ Dataset에서 y 변경 (F1~F9, S0~S9 예측)
+                        self.y.append(features[i + seq_length][2:])  # 2번째 인덱스부터 끝까지 (F1~F9, S0~S9)
         
         print(f"✅ 데이터셋 생성 완료! 총 샘플 수: {len(self.X)}")
     
@@ -179,10 +179,10 @@ def main():
     input_dim = 21
     hidden_dim = 64
     num_layers = 2
-    output_dim = 1
+    output_dim = 19  # F1~F9 (9개) + S0~S9 (10개) = 19개 예측
     
     model = LSTMPredictor(input_dim, hidden_dim, num_layers, output_dim).to(device)
-    criterion = nn.BCELoss()  # Binary Cross Entropy Loss
+    criterion = nn.MSELoss()  # Mean Squared Error (회귀)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     train_model(model, train_loader, criterion, optimizer, num_epochs=10)
