@@ -87,10 +87,16 @@ def train_isolation_forest(df, contamination="auto"):
     )
 
     start_time = time.time()
-    df["anomaly_score"] = model.fit_predict(X)
-    end_time = time.time()
+    
+    # ✅ 이상치 판단 (-1: 이상치, 1: 정상)
+    df["anomaly_label"] = model.fit_predict(X)
 
+    # ✅ 이상치 확률 (Anomaly Score, decision_function 사용)
+    df["anomaly_score"] = model.decision_function(X)
+
+    end_time = time.time()
     print(f"✅ Isolation Forest 실행 완료! 걸린 시간: {end_time - start_time:.2f}초")
+
     return df, model
 
 def main():
@@ -112,7 +118,7 @@ def main():
         return
 
     # 결과 확인 및 저장
-    anomaly_ratio = sum(df['anomaly_score'] == -1) / len(df) * 100
+    anomaly_ratio = sum(df['anomaly_label'] == -1) / len(df) * 100
     print(f"✅ 이상 거래 탐지 완료 (이상치 비율: {anomaly_ratio:.2f}%)")
 
     df.to_csv(output_file, index=False)
