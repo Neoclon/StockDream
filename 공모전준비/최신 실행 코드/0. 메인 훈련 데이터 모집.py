@@ -512,8 +512,13 @@ from concurrent.futures import ThreadPoolExecutor
 async def main():
     # Fixed values
     exchange = "bithumb"
+<<<<<<< HEAD
     start_datetime = "2022-01-01-00:00"
     end_datetime = "2023-01-01-00:00"
+=======
+    start_datetime = "2024-01-01-00:00"
+    end_datetime = "2025-01-01-00:00"
+>>>>>>> caf91677042a7d4d24d44ca8f480be8eb9d4dabc
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
