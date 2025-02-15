@@ -512,8 +512,8 @@ from concurrent.futures import ThreadPoolExecutor
 async def main():
     # Fixed values
     exchange = "bithumb"
-    start_datetime = "2024-01-01-00:00"
-    end_datetime = "2025-01-01-00:00"
+    start_datetime = "2024-07-21-00:00"
+    end_datetime = "2025-01-23-00:00"
     term_days = 1
     digit_type = "both"
     analysis_target = "TA"
@@ -521,7 +521,7 @@ async def main():
     # Multiple symbol groups input
     #print("심볼 무리를 입력하세요. 쉼표로 구분하고 각 무리는 세미콜론(;)으로 구분하세요.")
     #print("예시: BTCUSDT,ETHUSDT;XRPUSDT,DOGEUSDT;SOLUSDT,ADAUSDT")
-    symbol_groups_input = "KRW-UNI,KRW-PEPE,KRW-ONDO;KRW-MNT,KRW-POL,KRW-CRO;KRW-RENDER,KRW-INJ,KRW-BONK;KRW-MOVE,KRW-JUP,KRW-PYTH;KRW-BTT,KRW-BSV,KRW-BEAM;KRW-W,KRW-AKT,KRW-PENDLE;KRW-SAFE,KRW-VTHO,KRW-CTC;KRW-MEW,KRW-CKB,KRW-MOCA;KRW-ATH,KRW-UXLINK,KRW-ZETA;KRW-VANA,KRW-ANIME,KRW-ME;KRW-DRIFT,KRW-G,KRW-XEC;KRW-WAVES,KRW-WAXP,KRW-ICX;KRW-BIGTIME,KRW-BLAST,KRW-TAIKO;KRW-BORA,KRW-MVL,KRW-AGLD;KRW-DKA,KRW-CARV,KRW-ORBS;KRW-MLK,KRW-GAME2,KRW-MED;KRW-MTL,KRW-AUCTION,KRW-CBK;KRW-TOKAMAK,KRW-HIFI,KRW-QKC"
+    symbol_groups_input = "KRW-AVAIL"
 
     # Split the input into groups
     symbol_groups = [
